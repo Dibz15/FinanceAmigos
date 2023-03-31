@@ -123,15 +123,26 @@ test_data <- features_complete[(train_size + validation_size + 1):n_rows]
 
 mse_values = rep(0, 1000)
 it_value = 0
+window_size = 2 # days
+prediction_size = 2
 
 mse_fitness_function <- function(weights, data) {
-  actual_price <- data[, "Close_Price"]
-  print(actual_price)
-  predicted_price <- sum(weights * data[, -1]) # -1 to exclude the Close_Price column
-  mse <- mean((actual_price - predicted_price) ^ 2)
-  mse_values[it_value] = mse
-  it_value = it_value + 1
-  
+  start_index <- sample(1:(nrow(data) - window_size), 1)
+  # Extract a portion of the data with the given window size
+  window_data <- data[start_index:(start_index + window_size - 1),]
+  actual_data = data[(start_index + window_size):(start_index + window_size - 1) + prediction_size,]
+  print(window_data)
+  print(actual_data)
+  actual_prices = actual_data[, "Close_Price"]
+  # actual_price <- window_data[-1, "Close_Price"]
+  # print(actual_price)
+  # actual_price <- data[, "Close_Price"]
+  # # print(actual_price)
+  # predicted_price <- sum(weights * data[, -1]) # -1 to exclude the Close_Price column
+  # mse <- mean((actual_price - predicted_price) ^ 2)
+  # mse_values[it_value] = mse
+  # it_value = it_value + 1
+  mse = 0
   return(mse)
 }
 
