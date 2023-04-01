@@ -13,7 +13,7 @@ library(tensorflow)
 # tf_config()
 
 symbol <- "AMD"
-start_date <- as.Date("2021-01-01")
+start_date <- as.Date("2018-01-01")
 end_date <- as.Date("2023-01-01")
 stock_data <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
 
@@ -130,7 +130,10 @@ preprocess_data <- function(data, lookback_window, horizon) {
 
 build_lstm_model <- function(input_shape, learning_rate, regularization) {
   model <- keras_model_sequential() %>%
-    layer_lstm(units = 50, input_shape = input_shape, kernel_regularizer = regularizer_l2(l = regularization)) %>%
+    layer_lstm(units = 10, input_shape = input_shape, return_sequences=TRUE, kernel_regularizer = regularizer_l2(l = regularization)) %>%
+    layer_dropout(rate=0.5) %>%
+    layer_lstm(units = 10, kernel_regularizer = regularizer_l2(l = regularization)) %>%
+    layer_dropout(rate=0.5) %>%
     layer_dense(units = 1)
   
   model %>% compile(
@@ -170,9 +173,9 @@ mse_fitness_function <- function(pso_params, train_data, val_data, horizon) {
   return(val_mse)
 }
 
-initial_weights <- runif(4)
-lower_bounds <- c(0.001, 0.0001, 5, 2)
-upper_bounds <- c(0.1, 0.01, 40, 20)
+lower_bounds <- c(0.0001, 0.001, 10, 5)
+upper_bounds <- c(0.005, 0.01, 50, 50)
+initial_weights <- runif(4, upper_bounds=upper_bounds, lower_bounds=lower_bounds)
 
 result <- psoptim(
   par = initial_weights,
@@ -183,7 +186,7 @@ result <- psoptim(
   val_data = validation_data,
   # lookback_window = 20,
   horizon = 1,
-  control = list(maxit = 1)
+  control = list(maxit = 20)
 )
 
 optimal_params <- result$par
@@ -252,3 +255,25 @@ evaluate_final_model = function(optimal_params, test_data, horizon) {
 results = evaluate_final_model(optimal_params, test_data, horizon=1)
 # Implement your trading strategy and backtest it using the predicted_test_prices
 
+
+trading_signals <- ifelse(results$predicted > results$actual[-length(results$actual)], "Buy", "Sell")
+
+portfolio_value <- 100000 # Initial portfolio value
+cash <- portfolio_value
+num_shares <- 0
+
+for (i in 1:(length(trading_signals) - 1)) {
+  if (trading_signals[i] == "Buy" && cash >= actual_test_prices[i]) {
+    num_shares_bought <- floor(cash / actual_test_prices[i])
+    num_shares <- num_shares + num_shares_bought
+    cash <- cash - (num_shares_bought * actual_test_prices[i])
+  } else if (trading_signals[i] == "Sell" && num_shares > 0) {
+    cash <- cash + (num_shares * actual_test_prices[i])
+    num_shares <- 0
+  }
+}
+
+# Calculate final portfolio value
+portfolio_value_final <- cash + (num_shares * actual_test_prices[length(actual_test_prices)])
+cat("Initial Portfolio Value:", portfolio_value, "\n")
+cat("Final Portfolio Value:", portfolio_value_final, "\n")
