@@ -77,14 +77,34 @@ ggplot(features_long, aes(x = Date, y = Value, color = Feature, group = Feature)
 
 # Calculate the number of rows for each set
 n_rows <- nrow(features_complete)
-train_size <- floor(0.60 * n_rows)
-validation_size <- floor(0.20 * n_rows)
+train_size <- floor(0.70 * n_rows)
+validation_size <- floor(0.15 * n_rows)
 test_size <- n_rows - train_size - validation_size
 
+normalize_data <- function(data) {
+  col_mins <- apply(data, 2, min)
+  col_maxs <- apply(data, 2, max)
+  col_ranges <- col_maxs - col_mins
+  
+  normalized_data <- sweep(data, 2, col_mins, FUN = "-")
+  normalized_data <- sweep(normalized_data, 2, col_ranges, FUN = "/")
+  
+  list(data = normalized_data, col_mins = col_mins, col_ranges = col_ranges)
+}
+
+denormalize_data <- function(normalized_data, col_mins, col_ranges) {
+  denormalized_data <- sweep(normalized_data, 2, col_ranges, FUN = "*")
+  denormalized_data <- sweep(denormalized_data, 2, col_mins, FUN = "+")
+  
+  denormalized_data
+}
 # Split the data into training, validation, and test sets
-train_data <- features_complete[1:train_size]
-validation_data <- features_complete[(train_size + 1):(train_size + validation_size)]
-test_data <- features_complete[(train_size + validation_size + 1):n_rows]
+
+normal_data = normalize_data(features_complete)
+
+train_data <- normal_data$data[1:train_size]
+validation_data <- normal_data$data[(train_size + 1):(train_size + validation_size)]
+test_data <- normal_data$data[(train_size + validation_size + 1):n_rows]
 
 window_size = 25 # days
 prediction_size = 1
@@ -92,18 +112,12 @@ num_features = ncol(train_data)
 
 tensorboard_callback <- callback_tensorboard(log_dir = "logs/fit")
 
-normalize_data <- function(data) {
-  min_values <- apply(data, 2, min)
-  max_values <- apply(data, 2, max)
-  normalized_data <- (data - min_values) / (max_values - min_values)
-  return(normalized_data)
-}
-
 preprocess_data <- function(data, lookback_window, horizon) {
   # Normalize the data
-  normalized_data <- normalize_data(data)
-  
+  normalized_data <- data
+  print(nrow(data))
   num_samples <- nrow(data) - lookback_window - horizon + 1
+  print(num_samples)
   x <- array(0, dim = c(num_samples, lookback_window, ncol(normalized_data)))
   y <- array(0, dim = c(num_samples, horizon))
   
@@ -115,22 +129,9 @@ preprocess_data <- function(data, lookback_window, horizon) {
   list(x = x, y = y)
 }
 
-# preprocess_data <- function(data, lookback_window, horizon) {
-#   num_samples <- nrow(data) - lookback_window - horizon + 1
-#   x <- array(0, dim = c(num_samples, lookback_window, ncol(data)))
-#   y <- array(0, dim = c(num_samples, horizon))
-#   
-#   for (i in 1:num_samples) {
-#     x[i, , ] <- data[i:(i + lookback_window - 1), ]
-#     y[i, ] <- data[(i + lookback_window):(i + lookback_window + horizon - 1), "Close_Price"]
-#   }
-#   
-#   list(x = x, y = y)
-# }
-
 build_lstm_model <- function(input_shape, learning_rate, regularization) {
   model <- keras_model_sequential() %>%
-    layer_lstm(units = 10, input_shape = input_shape, return_sequences=TRUE, kernel_regularizer = regularizer_l2(l = regularization)) %>%
+    layer_lstm(units = 20, input_shape = input_shape, return_sequences=TRUE, kernel_regularizer = regularizer_l2(l = regularization)) %>%
     layer_dropout(rate=0.5) %>%
     layer_lstm(units = 10, kernel_regularizer = regularizer_l2(l = regularization)) %>%
     layer_dropout(rate=0.5) %>%
@@ -174,8 +175,8 @@ mse_fitness_function <- function(pso_params, train_data, val_data, horizon) {
 }
 
 lower_bounds <- c(0.0001, 0.001, 10, 5)
-upper_bounds <- c(0.005, 0.01, 50, 50)
-initial_weights <- runif(4, upper_bounds=upper_bounds, lower_bounds=lower_bounds)
+upper_bounds <- c(0.005, 0.01, 100, 50)
+initial_weights <- runif(4, min=lower_bounds, max=upper_bounds)
 
 result <- psoptim(
   par = initial_weights,
@@ -195,8 +196,8 @@ train_final_model = function(optimal_params, train_data, val_data, horizon) {
   # Extract the optimal parameters from the PSO result
   learning_rate <- optimal_params[1]
   regularization <- optimal_params[2]
-  lookback_window <- optimal_params[4]
-  epochs <- optimal_params[3]
+  lookback_window <- 20
+  epochs <- 50
   
   processed_train <- preprocess_data(train_data, lookback_window, horizon)
   processed_val <- preprocess_data(val_data, lookback_window, horizon)
@@ -222,9 +223,8 @@ train_model = train_final_model(optimal_params, train_data, validation_data, hor
 evaluate_final_model = function(optimal_params, test_data, horizon) {
   learning_rate <- optimal_params[1]
   regularization <- optimal_params[2]
-  lookback_window <- optimal_params[4]
-  epochs <- optimal_params[3]
-  
+  lookback_window <- 20
+
   processed_test <- preprocess_data(test_data, lookback_window, horizon)
   
   print(processed_test)
@@ -255,25 +255,101 @@ evaluate_final_model = function(optimal_params, test_data, horizon) {
 results = evaluate_final_model(optimal_params, test_data, horizon=1)
 # Implement your trading strategy and backtest it using the predicted_test_prices
 
+shifted_predicted <- results$predicted[-1,] # Remove the first element
+actual_trimmed <- results$actual[-length(results$actual),] # Remove the last element
+# trading_signals <- ifelse(shifted_predicted > actual_trimmed, "Buy", "Sell")
 
-trading_signals <- ifelse(results$predicted > results$actual[-length(results$actual)], "Buy", "Sell")
-
-portfolio_value <- 100000 # Initial portfolio value
+portfolio_value <- 100 # Initial portfolio value
 cash <- portfolio_value
 num_shares <- 0
 
+# Initialize the cash_value vector
+# cash_value <- numeric(length(trading_signals))
+
+# Calculate the predicted profit percentage
+predicted_profit_pct <- (shifted_predicted - actual_trimmed) / actual_trimmed
+
+# Modify the trading signal to include the "hold" option
+threshold <- 0.10  # You can adjust this threshold to control when to hold
+trading_signals <- ifelse(predicted_profit_pct > threshold, "Buy",
+                          ifelse(predicted_profit_pct < -threshold, "Sell", "Hold"))
+
+# Initialize the cash_value vector
+cash_value <- rep(NA, length(trading_signals))
+asset_value = rep(NA, length(trading_signals))
+total_portfolio_value = rep(NA, length(trading_signals))
+
+# Backtesting loop
 for (i in 1:(length(trading_signals) - 1)) {
-  if (trading_signals[i] == "Buy" && cash >= actual_test_prices[i]) {
-    num_shares_bought <- floor(cash / actual_test_prices[i])
+  cash_value[i] <- cash
+  
+  if (trading_signals[i] == "Buy" && cash >= actual_trimmed[i]) {
+    investment_amount <- cash * predicted_profit_pct[i]
+    num_shares_bought <- floor(investment_amount / actual_trimmed[i])
     num_shares <- num_shares + num_shares_bought
-    cash <- cash - (num_shares_bought * actual_test_prices[i])
+    cash <- cash - (num_shares_bought * actual_trimmed[i])
   } else if (trading_signals[i] == "Sell" && num_shares > 0) {
-    cash <- cash + (num_shares * actual_test_prices[i])
-    num_shares <- 0
+    sell_amount <- num_shares * actual_trimmed[i] * (-predicted_profit_pct[i])
+    num_shares_sold <- floor(sell_amount / actual_trimmed[i])
+    num_shares <- num_shares - num_shares_sold
+    cash <- cash + (num_shares_sold * actual_trimmed[i])
   }
+  
+  asset_value[i] = num_shares * actual_trimmed[i]
+  total_portfolio_value[i] = cash + asset_value[i]
 }
 
+# Add the final cash value
+cash_value[length(trading_signals)] <- cash
+asset_value[length(trading_signals)] = num_shares * actual_trimmed[length(actual_trimmed)]
+total_portfolio_value[length(trading_signals)] = cash + (num_shares * actual_trimmed[length(actual_trimmed)])
+
+# The rest of the code for calculating the final portfolio value and plotting remains the same
+
+
+# Add the final cash value
+cash_value[length(trading_signals)] <- cash
+lookback_window = 20
+horizon = 1
+
 # Calculate final portfolio value
-portfolio_value_final <- cash + (num_shares * actual_test_prices[length(actual_test_prices)])
+portfolio_value_final <- cash + (num_shares * actual_trimmed[length(actual_trimmed)])
 cat("Initial Portfolio Value:", portfolio_value, "\n")
 cat("Final Portfolio Value:", portfolio_value_final, "\n")
+
+# Combine the actual prices, predicted prices, and trading signals into one data frame
+dates <- as.Date(index(test_data)[(lookback_window + horizon + 1):(nrow(test_data))])
+plot_data <- data.frame(Date = dates, 
+                        Actual_Price = actual_trimmed, 
+                        Predicted_Price = shifted_predicted, 
+                        Signal = trading_signals)
+
+# Add the cash_value vector to the plot_data data frame
+plot_data$Cash_Value <- cash_value
+plot_data$Asset_Value = asset_value
+plot_data$Portfolio_Value = total_portfolio_value
+
+# Create the base ggplot with the actual and predicted prices, and cash value as line series
+p <- ggplot(plot_data, aes(x = Date)) +
+  geom_line(aes(y = Actual_Price, color = "Actual")) +
+  geom_line(aes(y = Predicted_Price, color = "Predicted")) +
+  geom_line(aes(y = Cash_Value, color = "Cash Value")) +
+  geom_line(aes(y = Portfolio_Value, color = "Portfolio Value")) +
+  geom_line(aes(y = Asset_Value, color = "Asset Value")) +
+  labs(y = "Price", color = "Series")
+
+# Add geom_point to show buy and sell signals
+p <- p + geom_point(aes(y = Actual_Price, color = Signal), shape = 24, size = 3) +
+  scale_color_manual(values = c("Actual" = "blue", 
+                                "Predicted" = "orange", 
+                                "Cash Value" = "black", 
+                                "Portfolio Value" = "gold",
+                                "Asset Value" = "cyan",
+                                "Buy" = "green", 
+                                "Sell" = "red", 
+                                "Hold" = "purple"))
+
+# Print the ggplot
+plot(p)
+
+
