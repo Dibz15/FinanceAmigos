@@ -8,6 +8,7 @@ library(TTR)
 library(tidyr)
 library(keras)
 library(tensorflow)
+library(gridExtra)
 
 # tensorflow::install_tensorflow(version = "2.11.0", gpu = TRUE)
 # tf_config()
@@ -160,6 +161,12 @@ mse_fitness_function <- function(pso_params, train_data, val_data, horizon) {
     regularization = regularization
   )
   
+  current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+  log_dir <- paste0("logs/fit/", current_time, "_lr_", learning_rate, "_reg_", regularization, "_epochs_", epochs, "_lookback_", lookback_window)
+  
+  # Initialize tensorboard callback with the unique log directory
+  tensorboard_callback <- callback_tensorboard(log_dir = log_dir)
+  
   history <- model %>% fit(
     x = processed_train$x,
     y = processed_train$y,
@@ -257,9 +264,16 @@ results = evaluate_final_model(optimal_params, test_data, horizon=1)
 
 shifted_predicted <- results$predicted[-1,] # Remove the first element
 actual_trimmed <- results$actual[-length(results$actual),] # Remove the last element
-# trading_signals <- ifelse(shifted_predicted > actual_trimmed, "Buy", "Sell")
 
-portfolio_value <- 100 # Initial portfolio value
+denormalize_data <- function(normalized_data, col_min, col_range) {
+  denormalized_data <- normalized_data * col_range + col_min
+  denormalized_data
+}
+
+shifted_predicted = denormalize_data(shifted_predicted, normal_data$col_mins["Close_Price"], normal_data$col_ranges["Close_Price"])
+actual_trimmed = denormalize_data(actual_trimmed, normal_data$col_mins["Close_Price"], normal_data$col_ranges["Close_Price"])
+
+portfolio_value <- 10000 # Initial portfolio value
 cash <- portfolio_value
 num_shares <- 0
 
@@ -270,7 +284,7 @@ num_shares <- 0
 predicted_profit_pct <- (shifted_predicted - actual_trimmed) / actual_trimmed
 
 # Modify the trading signal to include the "hold" option
-threshold <- 0.10  # You can adjust this threshold to control when to hold
+threshold <- 0.05  # You can adjust this threshold to control when to hold
 trading_signals <- ifelse(predicted_profit_pct > threshold, "Buy",
                           ifelse(predicted_profit_pct < -threshold, "Sell", "Hold"))
 
@@ -278,10 +292,14 @@ trading_signals <- ifelse(predicted_profit_pct > threshold, "Buy",
 cash_value <- rep(NA, length(trading_signals))
 asset_value = rep(NA, length(trading_signals))
 total_portfolio_value = rep(NA, length(trading_signals))
+buy_and_hold_value = rep(NA, length(trading_signals))
+
+buy_and_hold_shares = floor(portfolio_value / actual_trimmed[1])
 
 # Backtesting loop
 for (i in 1:(length(trading_signals) - 1)) {
   cash_value[i] <- cash
+  buy_and_hold_value[i] = buy_and_hold_shares * actual_trimmed[i]
   
   if (trading_signals[i] == "Buy" && cash >= actual_trimmed[i]) {
     investment_amount <- cash * predicted_profit_pct[i]
@@ -303,10 +321,9 @@ for (i in 1:(length(trading_signals) - 1)) {
 cash_value[length(trading_signals)] <- cash
 asset_value[length(trading_signals)] = num_shares * actual_trimmed[length(actual_trimmed)]
 total_portfolio_value[length(trading_signals)] = cash + (num_shares * actual_trimmed[length(actual_trimmed)])
+buy_and_hold_value[length(trading_signals)] = buy_and_hold_shares * actual_trimmed[length(actual_trimmed)]
 
 # The rest of the code for calculating the final portfolio value and plotting remains the same
-
-
 # Add the final cash value
 cash_value[length(trading_signals)] <- cash
 lookback_window = 20
@@ -314,42 +331,44 @@ horizon = 1
 
 # Calculate final portfolio value
 portfolio_value_final <- cash + (num_shares * actual_trimmed[length(actual_trimmed)])
-cat("Initial Portfolio Value:", portfolio_value, "\n")
-cat("Final Portfolio Value:", portfolio_value_final, "\n")
 
 # Combine the actual prices, predicted prices, and trading signals into one data frame
-dates <- as.Date(index(test_data)[(lookback_window + horizon + 1):(nrow(test_data))])
-plot_data <- data.frame(Date = dates, 
-                        Actual_Price = actual_trimmed, 
-                        Predicted_Price = shifted_predicted, 
-                        Signal = trading_signals)
+plot_data <- data.frame(Date = dates,
+                        Value = c(actual_trimmed, shifted_predicted, cash_value, asset_value, total_portfolio_value, buy_and_hold_value),
+                        Type = factor(rep(c("Actual", "Predicted", "Cash Value", "Asset Value", "Portfolio Value", "Buy and Hold Value"), each = length(dates))),
+                        Signal = factor(rep(trading_signals, 6)))
 
-# Add the cash_value vector to the plot_data data frame
-plot_data$Cash_Value <- cash_value
-plot_data$Asset_Value = asset_value
-plot_data$Portfolio_Value = total_portfolio_value
-
-# Create the base ggplot with the actual and predicted prices, and cash value as line series
-p <- ggplot(plot_data, aes(x = Date)) +
-  geom_line(aes(y = Actual_Price, color = "Actual")) +
-  geom_line(aes(y = Predicted_Price, color = "Predicted")) +
-  geom_line(aes(y = Cash_Value, color = "Cash Value")) +
-  geom_line(aes(y = Portfolio_Value, color = "Portfolio Value")) +
-  geom_line(aes(y = Asset_Value, color = "Asset Value")) +
-  labs(y = "Price", color = "Series")
-
-# Add geom_point to show buy and sell signals
-p <- p + geom_point(aes(y = Actual_Price, color = Signal), shape = 24, size = 3) +
-  scale_color_manual(values = c("Actual" = "blue", 
-                                "Predicted" = "orange", 
-                                "Cash Value" = "black", 
+# Create a ggplot for the actual and predicted prices
+price_plot <- ggplot(data = subset(plot_data, Type %in% c("Actual", "Predicted")),
+                     aes(x = Date, y = Value, color = Type, group = Type)) +
+  geom_line() +
+  geom_point(data = subset(plot_data, Type == "Actual"), aes(color = Signal), shape = 24, size = 3) +
+  scale_color_manual(values = c("Actual" = "blue",
+                                "Predicted" = "orange",
+                                "Cash Value" = "black",
                                 "Portfolio Value" = "gold",
                                 "Asset Value" = "cyan",
-                                "Buy" = "green", 
-                                "Sell" = "red", 
-                                "Hold" = "purple"))
+                                "Buy" = "green",
+                                "Sell" = "red",
+                                "Hold" = "purple")) +
+  labs(y = "Price", color = "Series")
 
-# Print the ggplot
-plot(p)
+# Create a ggplot for the cash value, asset value, and portfolio value
+value_plot <- ggplot(data = subset(plot_data, Type %in% c("Cash Value", "Asset Value", "Portfolio Value", "Buy and Hold Value")),
+                     aes(x = Date, y = Value, color = Type, group = Type)) +
+  geom_line() +
+  scale_color_manual(values = c("Cash Value" = "black",
+                                "Portfolio Value" = "gold",
+                                "Asset Value" = "cyan",
+                                "Buy and Hold Value" = "red")) +
+  labs(y = "Value", color = "Series")
 
+# Combine the two ggplots with a common x-axis
+combined_plot <- grid.arrange(price_plot, value_plot, ncol = 1, heights = c(1, 1))
 
+# Print the combined ggplot
+plot(combined_plot)
+
+cat("Initial Portfolio Value:", portfolio_value, "\n")
+cat("Final Portfolio Value:", portfolio_value_final, "\n")
+cat("Buy and Hold Final Value:", buy_and_hold_value[length(buy_and_hold_value)], "\n")
