@@ -32,6 +32,7 @@ tensorflow::install_tensorflow(version = "2.11.0", gpu = TRUE)
 tf_config()
 ```
 
+explain sma, ema, rsi, macd
 
 ```{r}
 prepare_stock_data = function(stock_data) {
@@ -69,7 +70,7 @@ prepare_stock_data = function(stock_data) {
 ```
 
 
-```{r}
+```{r, echo=F}
 plot_stock = function(prepped_stock_data) {
   # Convert xts object to data frame
   features_df <- data.frame(Date = index(prepped_stock_data), coredata(prepped_stock_data))
@@ -99,6 +100,11 @@ plot_stock = function(prepped_stock_data) {
 }
 ```
 
+Explain the plot
+
+
+
+Explain the parameters
 
 ```{r}
 train_test_split = function(stock_data) {
@@ -121,6 +127,8 @@ train_test_split = function(stock_data) {
 ```
 
 
+Explain normalization and de-normalization
+
 ```{r}
 normalize_data <- function(data) {
   col_mins <- apply(data, 2, min)
@@ -134,7 +142,6 @@ normalize_data <- function(data) {
 }
 ```
 
-
 ```{r}
 denormalize_data <- function(normalized_data, col_mins, col_ranges) {
   denormalized_data <- sweep(normalized_data, 2, col_ranges, FUN = "*")
@@ -143,6 +150,7 @@ denormalize_data <- function(normalized_data, col_mins, col_ranges) {
   denormalized_data
 }
 ```
+
 
 ```{r}
 preprocess_data <- function(data, lookback_window, horizon) {
@@ -160,6 +168,13 @@ preprocess_data <- function(data, lookback_window, horizon) {
   list(x = x, y = y)
 }
 ```
+
+Explain the above code chunk
+
+
+
+
+explain about LSTM and about the workings & layers
 
 
 ```{r}
@@ -180,6 +195,9 @@ build_lstm_model <- function(input_shape, learning_rate, regularization) {
 }
 ```
 
+
+
+Talk about the below PSO function
 
 ```{r}
 mse_fitness_function <- function(pso_params, train_data, val_data, horizon) {
@@ -218,6 +236,8 @@ mse_fitness_function <- function(pso_params, train_data, val_data, horizon) {
 }
 ```
 
+
+
 ```{r, fig.align='center'}
 # Split the data into training, validation, and test sets
 
@@ -236,6 +256,10 @@ train_data = split_data_training$train
 validation_data = split_data_training$val
 test_data = split_data_training$test
 ```
+
+
+EXPLAIN about the LSTM Hyperparameters--> below code chunk
+- optimized by PSO
 
 ```{r}
 lower_bounds <- c(0.0001, 0.001, 10, 5)
@@ -261,11 +285,16 @@ optimal_params <- result$par
 ```
 
 After running the PSO algorithm for 20 iterations, it found the below optimal parameters. We are putting them in here manually to avoid unnecessary time for re-computing the parameters by re-running the PSO process.
+
+
+- This we r getting from tensorboard --> optimal hyperparameters
 ```{r}
 optimal_params = c(0.00221, 0.00415, 55, 24) # LR, L2 regularisation, epochs, lookback window
 ```
 
 
+
+--> Using the optimal hyperparameters to train the model for evaluation
 ```{r}
 train_final_model = function(optimal_params, train_data, val_data, horizon) {
   # Extract the optimal parameters from the PSO result
@@ -304,10 +333,14 @@ train_final_model = function(optimal_params, train_data, val_data, horizon) {
 ```{r, cache=TRUE, results="hide"}
 train_model = train_final_model(optimal_params, train_data, validation_data, horizon=1)
 ```
-```{r, fig.width=6, fig.height=3, fig.align='center'}
+
+
+```{r, fig.width=3, fig.height=2, fig.align='center', echo=FALSE}
 knitr::include_graphics("./final_train_amd.png")
 ```
 
+
+-> evaluating the optimal model and producing the predicted values for the test set.
 ```{r}
 evaluate_final_model = function(optimal_params, model, test_data, horizon) {
   learning_rate <- optimal_params[1]
@@ -338,6 +371,9 @@ evaluate_final_model = function(optimal_params, model, test_data, horizon) {
 }
 ```
 
+
+
+Explain principles of backtesting and talk about the code chunk below.
 
 ```{r}
 backtest_results = function(predicted, actual, normalized_data, buy_threshold = 0.05, sell_threshold = -0.05, initial_cash = 10000) {
@@ -467,6 +503,11 @@ plot_backtest = function(dates, backtest_series) {
 # cat("Buy and Hold Final Value:", backtest_series$BuyAndHold[nrow(backtest_series)], "\n")
 ```
 
+Explain the plot generated from the code chunk above.
+
+
+
+- Taking the trained model & predicting values and then using backtesting with a starting portfolio value
 
 ```{r, echo=F}
 full_evaluation = function(optimal_params, model, test_data, normal_data, cash=100000, buy_threshold=0.02, sell_threshold=-0.02) {
@@ -501,6 +542,10 @@ normalize_data2 <- function(data_to_normalize, col_mins, col_ranges) {
 ```
 
 
+
+
+Compare both the outputs.
+
 ```{r, results="hide", fig.keep='all', fig.align='center'}
 symbol <- "AMD"
 start_date <- as.Date("2021-08-01")
@@ -521,3 +566,5 @@ stock_data_aapl <- getSymbols(symbol, src = "yahoo", from = start_date, to = end
 normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
 full_evaluation(optimal_params, train_model, normal_data_aapl$data, normal_data_aapl, cash=100000, buy_threshold=0.02, sell_threshold=-0.05)
 ```
+
+Reasons for why the model is successful and what is it doing.
