@@ -13,74 +13,85 @@ library(gridExtra)
 # tensorflow::install_tensorflow(version = "2.11.0", gpu = TRUE)
 # tf_config()
 
-symbol <- "AMD"
-start_date <- as.Date("2018-01-01")
-end_date <- as.Date("2023-01-01")
-stock_data <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
+prepare_stock_data = function(stock_data) {
+  # Close price
+  close_price <- Cl(stock_data)
+  
+  # Simple Moving Average (SMA) - 10-day period
+  sma <- SMA(close_price, n = 10)
+  
+  # Exponential Moving Average (EMA) - 10-day period
+  ema <- EMA(close_price, n = 10)
+  
+  # Relative Strength Index (RSI) - 14-day period
+  rsi <- RSI(close_price, n = 14)
+  
+  # Moving Average Convergence Divergence (MACD) - fast = 12 days, slow = 26 days, signal = 9 days
+  macd_obj <- MACD(close_price, nFast = 12, nSlow = 26, nSig = 9, maType = "EMA")
+  macd_signal <- macd_obj$signal
+  
+  # Bollinger Bands - 20-day period
+  bbands <- BBands(close_price, n = 20)
+  bbands_pct <- (close_price - bbands[,1]) / (bbands[,3] - bbands[,1])
+  
+  # Add volume for the stock
+  volume = Vo(stock_data)
+  
+  # Merge all the features into a single dataset
+  features <- merge(close_price, sma, ema, rsi, macd_signal, bbands_pct)
+  colnames(features) <- c("Close_Price", "SMA", "EMA", "RSI", "MACD_Signal", "BBands_Pct")
+  
+  # Remove rows with NA values
+  features_complete <- na.omit(features)
+  return(features_complete)
+}
 
-# Close price
-close_price <- Cl(stock_data)
+plot_stock = function(prepped_stock_data) {
+  # Convert xts object to data frame
+  features_df <- data.frame(Date = index(prepped_stock_data), coredata(prepped_stock_data))
+  colnames(features_df) <- c("Date", "Close_Price", "SMA", "EMA", "RSI", "MACD_Signal", "BBands_Pct")
+  
+  # Reshape data frame to long format
+  features_long <- features_df %>%
+    tidyr::gather(key = "Feature", value = "Value", -Date)
+  
+  # Update the scale for the "Volume" feature
+  features_long$Value <- ifelse(features_long$Feature == "Volume",
+                                features_long$Value / 1e6, # Adjust the scale factor as needed
+                                features_long$Value)
+  
+  # Add a suffix to the "Volume" feature name to indicate the new scale
+  features_long$Feature <- ifelse(features_long$Feature == "Volume",
+                                  "Volume (Millions)",
+                                  features_long$Feature)
+  
+  ggplot(features_long, aes(x = Date, y = Value, color = Feature, group = Feature)) +
+    geom_line() +
+    scale_color_discrete(name = "Features") +
+    labs(title = "Stock Features over Time",
+         x = "Date",
+         y = "Value") +
+    theme_minimal()
+  
+}
 
-# Simple Moving Average (SMA) - 10-day period
-sma <- SMA(close_price, n = 10)
-
-# Exponential Moving Average (EMA) - 10-day period
-ema <- EMA(close_price, n = 10)
-
-# Relative Strength Index (RSI) - 14-day period
-rsi <- RSI(close_price, n = 14)
-
-# Moving Average Convergence Divergence (MACD) - fast = 12 days, slow = 26 days, signal = 9 days
-macd_obj <- MACD(close_price, nFast = 12, nSlow = 26, nSig = 9, maType = "EMA")
-macd_signal <- macd_obj$signal
-
-# Bollinger Bands - 20-day period
-bbands <- BBands(close_price, n = 20)
-bbands_pct <- (close_price - bbands[,1]) / (bbands[,3] - bbands[,1])
-
-# Add volume for the stock
-volume = Vo(stock_data)
-
-# Merge all the features into a single dataset
-features <- merge(close_price, sma, ema, rsi, macd_signal, bbands_pct)
-colnames(features) <- c("Close_Price", "SMA", "EMA", "RSI", "MACD_Signal", "BBands_Pct")
-
-# Remove rows with NA values
-features_complete <- na.omit(features)
-
-# Convert xts object to data frame
-features_df <- data.frame(Date = index(features_complete), coredata(features_complete))
-colnames(features_df) <- c("Date", "Close_Price", "SMA", "EMA", "RSI", "MACD_Signal", "BBands_Pct")
-
-# Reshape data frame to long format
-features_long <- features_df %>%
-  tidyr::gather(key = "Feature", value = "Value", -Date)
-
-
-# Update the scale for the "Volume" feature
-features_long$Value <- ifelse(features_long$Feature == "Volume",
-                              features_long$Value / 1e6, # Adjust the scale factor as needed
-                              features_long$Value)
-
-# Add a suffix to the "Volume" feature name to indicate the new scale
-features_long$Feature <- ifelse(features_long$Feature == "Volume",
-                                "Volume (Millions)",
-                                features_long$Feature)
-
-ggplot(features_long, aes(x = Date, y = Value, color = Feature, group = Feature)) +
-  geom_line() +
-  scale_color_discrete(name = "Features") +
-  labs(title = "Stock Features over Time",
-       x = "Date",
-       y = "Value") +
-  theme_minimal()
-
-
-# Calculate the number of rows for each set
-n_rows <- nrow(features_complete)
-train_size <- floor(0.70 * n_rows)
-validation_size <- floor(0.15 * n_rows)
-test_size <- n_rows - train_size - validation_size
+train_test_split = function(stock_data) {
+  # Calculate the number of rows for each set
+  n_rows <- nrow(stock_data$data)
+  train_size <- floor(0.70 * n_rows)
+  validation_size <- floor(0.15 * n_rows)
+  test_size <- n_rows - train_size - validation_size
+  
+  train_data <- stock_data$data[1:train_size]
+  validation_data <- stock_data$data[(train_size + 1):(train_size + validation_size)]
+  test_data <- stock_data$data[(train_size + validation_size + 1):n_rows]
+  
+  list(
+    train = train_data,
+    val = validation_data,
+    test = test_data
+  )
+}
 
 normalize_data <- function(data) {
   col_mins <- apply(data, 2, min)
@@ -101,17 +112,20 @@ denormalize_data <- function(normalized_data, col_mins, col_ranges) {
 }
 # Split the data into training, validation, and test sets
 
-normal_data = normalize_data(features_complete)
+symbol <- "AMD"
+start_date <- as.Date("2018-01-01")
+end_date <- as.Date("2023-01-01")
+stock_data <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
 
-train_data <- normal_data$data[1:train_size]
-validation_data <- normal_data$data[(train_size + 1):(train_size + validation_size)]
-test_data <- normal_data$data[(train_size + validation_size + 1):n_rows]
+prepped_stock_data = prepare_stock_data(stock_data)
 
-window_size = 25 # days
-prediction_size = 1
-num_features = ncol(train_data)
+plot_stock(prepped_stock_data)
+normal_data = normalize_data(prepped_stock_data)
+split_data = train_test_split(normal_data)
 
-tensorboard_callback <- callback_tensorboard(log_dir = "logs/fit")
+train_data = split_data$train
+validation_data = split_data$val
+test_data = split_data$test
 
 preprocess_data <- function(data, lookback_window, horizon) {
   # Normalize the data
@@ -183,7 +197,7 @@ lower_bounds <- c(0.0001, 0.001, 10, 5)
 upper_bounds <- c(0.005, 0.01, 100, 50)
 initial_weights <- runif(4, min=lower_bounds, max=upper_bounds)
 
-result <- psoptim(
+result <- psoptim( 
   par = initial_weights,
   fn = mse_fitness_function,
   lower = lower_bounds,
@@ -212,13 +226,19 @@ train_final_model = function(optimal_params, train_data, val_data, horizon) {
                             learning_rate = learning_rate,
                             regularization = regularization)
   
+  current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+  log_dir <- paste0("logs/fit/", current_time, "_lr_", learning_rate, "_reg_", regularization, "_epochs_", epochs, "_lookback_", lookback_window)
+  
+  # Initialize tensorboard callback with the unique log directory
+  tensorboard_callback <- callback_tensorboard(log_dir = log_dir)
+  
   # Train the LSTM model with the optimal parameters
   history <- model %>% fit(
     processed_train$x, processed_train$y,
     epochs = epochs,
     batch_size = 32,
     validation_data = list(processed_val$x, processed_val$y),
-    callbacks = list(callback_tensorboard(log_dir = "logs/test"))
+    callbacks = list(tensorboard_callback)
   )
   return(model)
 }
@@ -379,7 +399,7 @@ backtest_results = function(dates, predicted, actual, normalized_data, buy_thres
   # Calculate final portfolio value
   cat("Initial Portfolio Value:", initial_cash, "\n")
   cat("Final Portfolio Value:", backtest_series$Portfolio[nrow(backtest_series)], "\n")
-  cat("Buy and Hold Final Value:", buy_and_hold_value[length(buy_and_hold_value)], "\n")
+  cat("Buy and Hold Final Value:", backtest_series$BuyAndHold[nrow(backtest_series)], "\n")
 }
 
 full_evaluation = function(optimal_params, model, test_data) {
@@ -390,10 +410,23 @@ full_evaluation = function(optimal_params, model, test_data) {
   dates <- as.Date(index(test_data)[(lookback_window + horizon + 1):(nrow(test_data))])
   
   backtest_results(dates, results$predicted, results$actual, normal_data, 
-                   buy_threshold = 0.08, 
+                   buy_threshold = 0.02, 
                    sell_threshold = -0.02,
                    initial_cash = 100000)
 }
 
 full_evaluation(optimal_params, train_model, test_data)
 
+normalize_data2 <- function(data_to_normalize, col_mins, col_ranges) {
+  normalized_data <- sweep(data_to_normalize, 2, col_mins, FUN = "-")
+  normalized_data <- sweep(normalized_data, 2, col_ranges, FUN = "/")
+  return(normalized_data)
+}
+
+symbol <- "AMD"
+start_date <- as.Date("2021-08-01")
+end_date <- as.Date("2023-04-01")
+stock_data <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
+
+normal_data2 = normalize_data2(prepare_stock_data(stock_data), normal_data$col_mins, normal_data$col_ranges)
+full_evaluation(optimal_params, train_model, normal_data2)
