@@ -8,7 +8,7 @@ always_allow_html: true
 urlcolor: blue
 ---
 
-```{r, echo=FALSE, include=FALSE }
+```{r, echo=FALSE, include=FALSE, eval=FALSE }
 install.packages("keras")
 ```
 
@@ -27,7 +27,7 @@ library(gridExtra)
 ```
 
 
-```{r, include=FALSE}
+```{r, include=FALSE, eval=FALSE}
 tensorflow::install_tensorflow(version = "2.11.0", gpu = TRUE)
 tf_config()
 ```
@@ -144,27 +144,6 @@ denormalize_data <- function(normalized_data, col_mins, col_ranges) {
 }
 ```
 
-
-```{r}
-# Split the data into training, validation, and test sets
-
-symbol <- "AMD"
-start_date <- as.Date("2018-01-01")
-end_date <- as.Date("2023-01-01")
-stock_data <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
-
-prepped_stock_data = prepare_stock_data(stock_data)
-
-plot_stock(prepped_stock_data)
-normal_data = normalize_data(prepped_stock_data)
-split_data = train_test_split(normal_data)
-
-train_data = split_data$train
-validation_data = split_data$val
-test_data = split_data$test
-```
-
-
 ```{r}
 preprocess_data <- function(data, lookback_window, horizon) {
   # Normalize the data
@@ -239,6 +218,24 @@ mse_fitness_function <- function(pso_params, train_data, val_data, horizon) {
 }
 ```
 
+```{r, fig.align='center'}
+# Split the data into training, validation, and test sets
+
+symbol <- "AMD"
+start_date <- as.Date("2018-01-01")
+end_date <- as.Date("2023-01-01")
+stock_data <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
+
+prepped_stock_data = prepare_stock_data(stock_data)
+
+plot_stock(prepped_stock_data)
+normal_data_training = normalize_data(prepped_stock_data)
+split_data_training = train_test_split(normal_data_training)
+
+train_data = split_data_training$train
+validation_data = split_data_training$val
+test_data = split_data_training$test
+```
 
 ```{r}
 lower_bounds <- c(0.0001, 0.001, 10, 5)
@@ -247,7 +244,7 @@ initial_weights <- runif(4, min=lower_bounds, max=upper_bounds)
 ```
 
 
-```{r, include=FALSE, message=FALSE}
+```{r eval=FALSE, echo=TRUE, message=FALSE, include=FALSE}
 result <- psoptim( 
   par = initial_weights,
   fn = mse_fitness_function,
@@ -261,6 +258,11 @@ result <- psoptim(
 )
 
 optimal_params <- result$par
+```
+
+After running the PSO algorithm for 20 iterations, it found the below optimal parameters. We are putting them in here manually to avoid unnecessary time for re-computing the parameters by re-running the PSO process.
+```{r}
+optimal_params = c(0.00221, 0.00415, 55, 24) # LR, L2 regularisation, epochs, lookback window
 ```
 
 
@@ -281,7 +283,7 @@ train_final_model = function(optimal_params, train_data, val_data, horizon) {
                             regularization = regularization)
   
   current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
-  log_dir <- paste0("logs/fit/", current_time, "_lr_", learning_rate, "_reg_", regularization, "_epochs_", epochs, "_lookback_", lookback_window)
+  log_dir <- paste0("logs/test/", current_time, "_lr_", learning_rate, "_reg_", regularization, "_epochs_", epochs, "_lookback_", lookback_window)
   
   # Initialize tensorboard callback with the unique log directory
   tensorboard_callback <- callback_tensorboard(log_dir = log_dir)
@@ -299,10 +301,12 @@ train_final_model = function(optimal_params, train_data, val_data, horizon) {
 ```
 
 
-```{r}
+```{r, cache=TRUE, results="hide"}
 train_model = train_final_model(optimal_params, train_data, validation_data, horizon=1)
 ```
-
+```{r, fig.width=6, fig.height=3, fig.align='center'}
+knitr::include_graphics("./final_train_amd.png")
+```
 
 ```{r}
 evaluate_final_model = function(optimal_params, model, test_data, horizon) {
@@ -312,7 +316,6 @@ evaluate_final_model = function(optimal_params, model, test_data, horizon) {
 
   processed_test <- preprocess_data(test_data, lookback_window, horizon)
   
-  print(processed_test)
   # Evaluate the performance of the LSTM model on the test data
   test_loss <- model %>% evaluate(processed_test$x, processed_test$y)
   
@@ -331,16 +334,13 @@ evaluate_final_model = function(optimal_params, model, test_data, horizon) {
   # Calculate the error between the actual and predicted test prices
   error <- mean((price_comparison$Actual_Price - price_comparison$Predicted_Price)^2)
   
-  # Print the error
-  cat("MSE on test data:", error)
-  
   list(actual = actual_test_prices, predicted = predicted_test_prices)
 }
 ```
 
 
 ```{r}
-backtest_results = function(dates, predicted, actual, normalized_data, buy_threshold = 0.05, sell_threshold = -0.05, initial_cash = 10000) {
+backtest_results = function(predicted, actual, normalized_data, buy_threshold = 0.05, sell_threshold = -0.05, initial_cash = 10000) {
   denormalize_data <- function(normalized_data, col_min, col_range) {
     denormalized_data <- normalized_data * col_range + col_min
     denormalized_data
@@ -411,84 +411,88 @@ backtest_results = function(dates, predicted, actual, normalized_data, buy_thres
                Portfolio = total_portfolio_value, 
                BuyAndHold = buy_and_hold_value,
                Actual = actual_value,
-               Signals = signals)
+               Signals = signals,
+               Predicted = shifted_predicted)
     )
   }
   
   backtest_series = backtest_loop(predicted_profit_pct, initial_cash, trading_signals, actual_trimmed)
-  # The rest of the code for calculating the final portfolio value and plotting remains the same
-  # Add the final cash value
-  
-  plot_backtest = function(dates, backtest_series, predicted) {
-    plot_data <- data.frame(Date = rep(dates, 6),
-                            Value = c(backtest_series$Actual, predicted, backtest_series$Cash, backtest_series$Assets, backtest_series$Portfolio, backtest_series$BuyAndHold),
-                            Type = factor(rep(c("Actual", "Predicted", "Cash Value", "Asset Value", "Portfolio Value", "Buy and Hold Value"), each = length(dates))),
-                            Signal = factor(rep(backtest_series$Signals, 6)))
-    
-    # Create a ggplot for the actual and predicted prices
-    price_plot <- ggplot(data = subset(plot_data, Type %in% c("Actual", "Predicted")),
-                         aes(x = Date, y = Value, color = Type, group = Type)) +
-      geom_line() +
-      geom_point(data = subset(plot_data, Type == "Actual"), aes(color = Signal), shape = 24, size = 3) +
-      scale_color_manual(values = c("Actual" = "blue",
-                                    "Predicted" = "orange",
-                                    "Cash Value" = "black",
-                                    "Portfolio Value" = "gold",
-                                    "Asset Value" = "cyan",
-                                    "Buy" = "green",
-                                    "Sell" = "red",
-                                    "Hold" = "purple")) +
-      labs(y = "Price ($)", color = "Series")
-    
-    # Create a ggplot for the cash value, asset value, and portfolio value
-    value_plot <- ggplot(data = subset(plot_data, Type %in% c("Cash Value", "Asset Value", "Portfolio Value", "Buy and Hold Value")),
-                         aes(x = Date, y = Value, color = Type, group = Type)) +
-      geom_line() +
-      scale_color_manual(values = c("Cash Value" = "black",
-                                    "Portfolio Value" = "blue",
-                                    "Asset Value" = "cyan",
-                                    "Buy and Hold Value" = "red")) +
-      labs(y = "Value ($)", color = "Series")
-    
-    # Combine the two ggplots with a common x-axis
-    combined_plot <- grid.arrange(price_plot, value_plot, ncol = 1, heights = c(1, 1))
-    
-    # Print the combined ggplot
-    plot(combined_plot)
-  }
-  
-  plot_backtest(dates, backtest_series, shifted_predicted)
-  
-  # Calculate final portfolio value
-  cat("Initial Portfolio Value:", initial_cash, "\n")
-  cat("Final Portfolio Value:", backtest_series$Portfolio[nrow(backtest_series)], "\n")
-  cat("Buy and Hold Final Value:", backtest_series$BuyAndHold[nrow(backtest_series)], "\n")
+  return(backtest_series)
 }
 ```
 
+```{r, echo=F}
+# The rest of the code for calculating the final portfolio value and plotting remains the same
+plot_backtest = function(dates, backtest_series) {
+  plot_data <- data.frame(Date = rep(dates, 6),
+                          Value = c(backtest_series$Actual, backtest_series$Predicted, backtest_series$Cash, backtest_series$Assets, backtest_series$Portfolio, backtest_series$BuyAndHold),
+                          Type = factor(rep(c("Actual", "Predicted", "Cash Value", "Asset Value", "Portfolio Value", "Buy and Hold Value"), each = length(dates))),
+                          Signal = factor(rep(backtest_series$Signals, 6)))
+  
+  # Create a ggplot for the actual and predicted prices
+  price_plot <- ggplot(data = subset(plot_data, Type %in% c("Actual", "Predicted")),
+                       aes(x = Date, y = Value, color = Type, group = Type)) +
+    geom_line() +
+    geom_point(data = subset(plot_data, Type == "Actual"), aes(color = Signal), shape = 24, size = 3) +
+    scale_color_manual(values = c("Actual" = "blue",
+                                  "Predicted" = "orange",
+                                  "Cash Value" = "black",
+                                  "Portfolio Value" = "gold",
+                                  "Asset Value" = "cyan3",
+                                  "Buy" = "green",
+                                  "Sell" = "red",
+                                  "Hold" = "purple")) +
+    labs(y = "Price ($)", color = "Series")
+  
+  # Create a ggplot for the cash value, asset value, and portfolio value
+  value_plot <- ggplot(data = subset(plot_data, Type %in% c("Cash Value", "Asset Value", "Portfolio Value", "Buy and Hold Value")),
+                       aes(x = Date, y = Value, color = Type, group = Type)) +
+    geom_line() +
+    scale_color_manual(values = c("Cash Value" = "black",
+                                  "Portfolio Value" = "blue",
+                                  "Asset Value" = "cyan3",
+                                  "Buy and Hold Value" = "red")) +
+    labs(y = "Value ($)", color = "Series")
+  
+  # Combine the two ggplots with a common x-axis
+  combined_plot <- grid.arrange(price_plot, value_plot, ncol = 1, heights = c(1, 1))
+  
+  # Print the combined ggplot
+  # plot(combined_plot)
+}
 
-```{r}
-full_evaluation = function(optimal_params, model, test_data) {
+# Calculate final portfolio value
+# cat("Initial Portfolio Value:", initial_cash, "\n")
+# cat("Final Portfolio Value:", backtest_series$Portfolio[nrow(backtest_series)], "\n")
+# cat("Buy and Hold Final Value:", backtest_series$BuyAndHold[nrow(backtest_series)], "\n")
+```
+
+
+```{r, echo=F}
+full_evaluation = function(optimal_params, model, test_data, normal_data, cash=100000, buy_threshold=0.02, sell_threshold=-0.02) {
   lookback_window = optimal_params[4]
   horizon = 1
   results = evaluate_final_model(optimal_params, model, test_data, horizon)
   # Combine the actual prices, predicted prices, and trading signals into one data frame
   dates <- as.Date(index(test_data)[(lookback_window + horizon + 1):(nrow(test_data))])
   
-  backtest_results(dates, results$predicted, results$actual, normal_data, 
-                   buy_threshold = 0.02, 
-                   sell_threshold = -0.02,
-                   initial_cash = 100000)
+  backtest_series = backtest_results(results$predicted, results$actual, normal_data, 
+                   buy_threshold, 
+                   sell_threshold,
+                   initial_cash = cash)
+  
+  
+  plot_backtest(dates, backtest_series)
 }
 ```
 
 
-```{r}
-full_evaluation(optimal_params, train_model, test_data)
+```{r, results="hide", fig.keep='all', fig.align='center'}
+full_evaluation(optimal_params, train_model, test_data, normal_data_training)
 ```
 
 
-```{r}
+```{r, echo=F}
 normalize_data2 <- function(data_to_normalize, col_mins, col_ranges) {
   normalized_data <- sweep(data_to_normalize, 2, col_mins, FUN = "-")
   normalized_data <- sweep(normalized_data, 2, col_ranges, FUN = "/")
@@ -497,13 +501,23 @@ normalize_data2 <- function(data_to_normalize, col_mins, col_ranges) {
 ```
 
 
-```{r}
+```{r, results="hide", fig.keep='all', fig.align='center'}
 symbol <- "AMD"
 start_date <- as.Date("2021-08-01")
 end_date <- as.Date("2023-04-01")
-stock_data <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
+stock_data_test <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
 
-normal_data2 = normalize_data2(prepare_stock_data(stock_data), normal_data$col_mins, normal_data$col_ranges)
-full_evaluation(optimal_params, train_model, normal_data2)
+
+normal_data2 = normalize_data2(prepare_stock_data(stock_data_test), normal_data_training$col_mins, normal_data_training$col_ranges)
+full_evaluation(optimal_params, train_model, normal_data2, normal_data_training, cash=100000)
 ```
 
+```{r, results="hide", fig.keep='all', fig.align='center'}
+symbol <- "GOOGL"
+start_date <- as.Date("2021-08-01")
+end_date <- as.Date("2023-04-01")
+stock_data_aapl <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
+
+normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
+full_evaluation(optimal_params, train_model, normal_data_aapl$data, normal_data_aapl, cash=100000, buy_threshold=0.02, sell_threshold=-0.05)
+```
