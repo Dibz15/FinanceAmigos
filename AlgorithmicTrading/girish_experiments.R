@@ -95,7 +95,6 @@ signal_common <- get_signal(parameter_common, training_index)
 
 pool_signals <- data.frame(signal_small, signal_med, signal_big, signal_common)
 colnames(pool_signals) <- c("signal_small", "signal_med", "signal_big", "signal_common")
-# take the cumulative sum of the signals and plot it, use date (index) as x-axis
 cumsum_signals <- cumsum(pool_signals)
 
 library(ggplot2)
@@ -126,16 +125,70 @@ ggplot(pool_values, aes(x = index(pool_values))) +
   labs(title = "Investment value", x = "Date", y = "Investment value") +
   theme_minimal()
 
-# eval here
-
 majority_signal <- get_majority_signal(pool_signals)
-print(majority_signal)
-
-# eval here
+# print(majority_signal)
 
 all_signals <- data.frame(pool_signals, majority_signal)
+# print(all_signals)
 
-print(all_signals)
+ggplot(cumsum(all_signals), aes(x = index(all_signals))) +
+  geom_line(aes(y = signal_small, color = "signal_small")) +
+  geom_line(aes(y = signal_med, color = "signal_med")) +
+  geom_line(aes(y = signal_big, color = "signal_big")) +
+  geom_line(aes(y = signal_common, color = "signal_common")) +
+  geom_line(aes(y = majority_signal, color = "majority_signal")) +
+  labs(title = "Cumulative sum of signals", x = "Date", y = "Cumulative sum of signals") +
+  theme_minimal()
+
+# Test data: SPY index from 2022 to 2023 and QQQ index from 2018 to 2021
+getSymbols("SPY", src = "yahoo", from = "2022-01-01", to = "2023-01-01")
+test_year <- Cl(SPY)
+getSymbols("QQQ", src = "yahoo", from = "2018-01-01", to = "2021-12-31")
+test_index <- Cl(QQQ)
+
+# Evaluate on test data
+test_signal_small <- get_signal(parameter_small, test_year)
+test_signal_med <- get_signal(parameter_med, test_year)
+test_signal_big <- get_signal(parameter_big, test_year)
+test_signal_common <- get_signal(parameter_common, test_year)
+
+pool_signals_test <- data.frame(test_signal_small, test_signal_med, test_signal_big, test_signal_common)
+colnames(pool_signals_test) <- c("test_signal_small", "test_signal_med", "test_signal_big", "test_signal_common")
+cumsum_signals_test <- cumsum(pool_signals_test)
+
+ggplot(cumsum_signals_test, aes(x = index(cumsum_signals_test))) +
+  geom_line(aes(y = test_signal_small, color = "test_signal_small")) +
+  geom_line(aes(y = test_signal_med, color = "test_signal_med")) +
+  geom_line(aes(y = test_signal_big, color = "test_signal_big")) +
+  geom_line(aes(y = test_signal_common, color = "test_signal_common")) +
+  labs(title = "Cumulative sum of signals", x = "Date", y = "Cumulative sum of signals") +
+  theme_minimal()
+     
+pool_values_test <- data.frame(
+  get_investment_values(parameter_small, test_year), get_investment_values(parameter_med, test_year),
+  get_investment_values(parameter_big, test_year), get_investment_values(parameter_common, test_year)
+)
+colnames(pool_values_test) <- c("value_small_test", "value_med_test", "value_big_test", "value_common_test")
+
+ggplot(pool_values_test, aes(x = index(pool_values_test))) +
+  geom_line(aes(y = value_small_test, color = "value_small_test")) +
+  geom_line(aes(y = value_med_test, color = "value_med_test")) +
+  geom_line(aes(y = value_big_test, color = "value_big_test")) +
+  geom_line(aes(y = value_common_test, color = "value_common_test")) +
+  labs(title = "Investment value", x = "Date", y = "Investment value") +
+  theme_minimal()
+
+majority_signal_test <- get_majority_signal(pool_signals_test)
+all_signals_test <- data.frame(pool_signals_test, majority_signal_test)
+
+ggplot(cumsum(all_signals_test), aes(x = index(all_signals_test))) +
+  geom_line(aes(y = test_signal_small, color = "test_signal_small")) +
+  geom_line(aes(y = test_signal_med, color = "test_signal_med")) +
+  geom_line(aes(y = test_signal_big, color = "test_signal_big")) +
+  geom_line(aes(y = test_signal_common, color = "test_signal_common")) +
+  geom_line(aes(y = majority_signal_test, color = "majority_signal_test")) +
+  labs(title = "Cumulative sum of signals", x = "Date", y = "Cumulative sum of signals") +
+  theme_minimal()
 
 # daily_returns_opt <- dailyReturn(sp500)
 # strategy_returns_opt <- daily_returns_opt * trading_signal_opt
