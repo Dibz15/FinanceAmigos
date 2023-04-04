@@ -5,12 +5,45 @@
 library(quantmod)
 library(hydroPSO)
 
+backtest_signal <- function(trading_signal, prices, initial_capital = 10000) {
+  cash_value <- rep(NA, length(trading_signal)+1)
+  asset_value <- rep(NA, length(trading_signal)+1)
+  number_of_shares <- rep(NA, length(trading_signal)+1)
+
+  trading_signal <- as.vector(trading_signal)
+  prices <- as.vector(prices)
+
+  cash_value[1] <- initial_capital
+  asset_value[1] <- 0
+  number_of_shares[1] <- 0
+
+  for (i in 1:(length(trading_signal))) {
+    if (trading_signal[i] == 1 && cash_value[i] >= prices[i]) {
+      # buy
+      number_of_shares[i+1] <- number_of_shares[i] + 1
+      cash_value[i+1] <- cash_value[i] - prices[i]
+    } else if (trading_signal[i] == -1 && number_of_shares[i] > 0) {
+      # sell
+      number_of_shares[i+1] <- number_of_shares[i] - 1
+      cash_value[i+1] <- cash_value[i] + prices[i]
+    } else {
+      # hold
+      number_of_shares[i+1] <- number_of_shares[i]
+      cash_value[i+1] <- cash_value[i]
+    }
+    asset_value[i+1] <- number_of_shares[i+1] * prices[i]
+  }
+  return(data.frame(
+    cash_value = cash_value, asset_value = asset_value,
+    number_of_shares = number_of_shares, total_value = cash_value + asset_value
+  ))
+}
+
 get_profit <- function(trading_signal,index) {
-  daily_returns <- dailyReturn(index)
-  strategy_returns <- daily_returns * trading_signal
-  end_equity <- cumprod(1 + strategy_returns)
-  end_profit <- last(end_equity)
-  return(end_profit)
+  initial_capital <- 10000
+  backtest <- backtest_signal(trading_signal,index,initial_capital)
+  profit <- backtest$total_value[length(backtest$total_value)] - backtest$total_value[1]
+  return(profit)
 }
 
 get_signal <- function(params,index) {
@@ -19,9 +52,8 @@ get_signal <- function(params,index) {
   signal = as.integer(params[3])
   
   macd <- MACD(index, nFast = fast, nSlow = slow, nSig = signal, maType = "EMA")
-  print(macd)
   
-  trading_signal <- lag(ifelse(macd$macd - macd$signal > 0.1, 1, ifelse(macd$macd - macd$signal < -0.1, -1, 0)))
+  trading_signal <- ifelse(macd$macd - macd$signal > 0.1, 1, ifelse(macd$macd - macd$signal < -0.1, -1, 0))
   trading_signal[is.na(trading_signal)] <- 0
 
   return(trading_signal)
@@ -32,26 +64,17 @@ fitness_function <- function(params,index) {
   return(-get_profit(trading_signal,index))
 }
 
-get_optimal_signal <- function(lower_bounds,upper_bounds,index) {
+get_optimal_parameter <- function(lower_bounds,upper_bounds,index) {
   this_fitness <- function(params) {return(fitness_function(params,index))}
   opt_results <- hydroPSO(fn = this_fitness, lower = lower_bounds, upper = upper_bounds, control = list(c1 = 2, c2 = 2, maxit = 100))
   optimal_params <- as.integer(opt_results$par)
-  return(get_signal(optimal_params,index))
-}
-
-get_pool_of_signals <- function(index) {
-  set.seed(42)
-  signal_small <- get_optimal_signal(c(1,5,5),c(5,20,50),index)
-  signal_med <- get_optimal_signal(c(1,15,5),c(15,50,50),index)
-  signal_big <- get_optimal_signal(c(1,50,5),c(50,200,50),index)
-  signal_common <- get_signal(c(12,26,9),index)
-
-  return(c(signal_small, signal_med, signal_big, signal_common))
+  return(optimal_params)
 }
 
 get_majority_signal <- function(pool) {
-  sum <- rowsum(pool)
-  new_signal <- lag(ifelse(sum >= 2, 1, ifelse(sum <= -2, -1, 0)))
+  # sum the pool signals across the 4 columns
+  signal_sum <- rowSums(pool)
+  new_signal <- ifelse(signal_sum >= 2, 1, ifelse(signal_sum <= -2, -1, 0))
   return(new_signal)
 }
 
@@ -59,17 +82,60 @@ get_majority_signal <- function(pool) {
 getSymbols("SPY", src = "yahoo", from = "2018-01-01", to = "2021-12-31")
 training_index <- Cl(SPY)
 
-pool_signals <- get_pool_of_signals(training_index)
+set.seed(42)
+parameter_small <- get_optimal_parameter(c(1,5,5),c(5,20,50),training_index)
+parameter_med <- get_optimal_parameter(c(1,15,5),c(15,50,50),training_index)
+parameter_big <- get_optimal_parameter(c(1,50,5),c(50,200,50),training_index)
+parameter_common <- c(12,26,9)
+
+signal_small <- get_signal(parameter_small, training_index)
+signal_med <- get_signal(parameter_med, training_index)
+signal_big <- get_signal(parameter_big, training_index)
+signal_common <- get_signal(parameter_common, training_index)
+
+pool_signals <- data.frame(signal_small, signal_med, signal_big, signal_common)
+colnames(pool_signals) <- c("signal_small", "signal_med", "signal_big", "signal_common")
+# take the cumulative sum of the signals and plot it, use date (index) as x-axis
+cumsum_signals <- cumsum(pool_signals)
+
+library(ggplot2)
+ggplot(cumsum_signals, aes(x = index(cumsum_signals))) +
+  geom_line(aes(y = signal_small, color = "signal_small")) +
+  geom_line(aes(y = signal_med, color = "signal_med")) +
+  geom_line(aes(y = signal_big, color = "signal_big")) +
+  geom_line(aes(y = signal_common, color = "signal_common")) +
+  labs(title = "Cumulative sum of signals", x = "Date", y = "Cumulative sum of signals") +
+  theme_minimal()
+     
+get_investment_values <- function(parameter,index) {
+  signal <- get_signal(parameter, index)
+  backtest <- backtest_signal(signal,index,10000)
+  return(backtest$total_value)
+}
+pool_values <- data.frame(
+  get_investment_values(parameter_small, training_index), get_investment_values(parameter_med, training_index),
+  get_investment_values(parameter_big, training_index), get_investment_values(parameter_common, training_index)
+)
+colnames(pool_values) <- c("value_small", "value_med", "value_big", "value_common")
+
+ggplot(pool_values, aes(x = index(pool_values))) +
+  geom_line(aes(y = value_small, color = "value_small")) +
+  geom_line(aes(y = value_med, color = "value_med")) +
+  geom_line(aes(y = value_big, color = "value_big")) +
+  geom_line(aes(y = value_common, color = "value_common")) +
+  labs(title = "Investment value", x = "Date", y = "Investment value") +
+  theme_minimal()
 
 # eval here
 
 majority_signal <- get_majority_signal(pool_signals)
+print(majority_signal)
 
 # eval here
 
-all_signals <- c(pool_signals,majority_signal)
+all_signals <- data.frame(pool_signals, majority_signal)
 
-print(pool_signals)
+print(all_signals)
 
 # daily_returns_opt <- dailyReturn(sp500)
 # strategy_returns_opt <- daily_returns_opt * trading_signal_opt
