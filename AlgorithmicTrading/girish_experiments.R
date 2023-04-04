@@ -141,7 +141,7 @@ print(all_signals)
 library(gramEvol)
 
 # Expects small, med, big, common
-get_grammar_signal <- function(signals) {
+get_grammar_expr <- function(signals) {
   # Define our grammar
   rules <- list(expr = grule(op(expr, expr),var),
               op = grule('+', '-', '*'),
@@ -160,9 +160,14 @@ get_grammar_signal <- function(signals) {
   return(expr)
 }
 
+get_grammar_signal <- function(signals,expr) {
+  return(eval(expr))
+}
+
 all_signals <- data.frame(small=signal_small, med=signal_med, big=signal_big, common=signal_common)
 names(all_signals) <- c('small','med','big','common')
-grammar_signal <- get_grammar_signal(all_signals)
+grammar_expr <- get_grammar_expr(all_signals)
+grammar_signal <- get_grammar_signal(all_signals,grammar_expr)
 
 # daily_returns_opt <- dailyReturn(sp500)
 # strategy_returns_opt <- daily_returns_opt * trading_signal_opt
