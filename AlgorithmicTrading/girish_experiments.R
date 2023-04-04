@@ -3,18 +3,19 @@
 # install.packages("hydroPSO")
 
 library(quantmod)
+library(hydroPSO)
 
-getSymbols("^GSPC", src = "yahoo", from = "2020-01-01", to = "2020-12-31")
+getSymbols("^GSPC", src = "yahoo", from = "2018-01-01", to = "2021-12-31")
 sp500 <- Cl(GSPC)
 
 fitness_function <- function(params) {
   fast = as.integer(params[1])
   slow = as.integer(params[2])
   signal = as.integer(params[3])
-  
-  if(slow - fast <= 5) {
-    return(-1e10)
-  }
+ 
+  # if(slow - fast <= 5) {
+  #   return(-1e10)
+  # }
   
   macd <- MACD(sp500, nFast = fast, nSlow = slow, nSig = signal, maType = "EMA")
   print(macd)
@@ -27,12 +28,10 @@ fitness_function <- function(params) {
   end_equity <- cumprod(1 + strategy_returns)
   end_profit <- last(end_equity)
   
-  return(end_profit)
+  return(-end_profit)
 }
 
-library(hydroPSO)
-
-lower_bounds <- c(10, 20, 5)
+lower_bounds <- c(1, 50, 5)
 upper_bounds <- c(50, 200, 50)
 
 set.seed(123)
@@ -61,7 +60,7 @@ getSymbols("^GSPC", src = "yahoo", from = "2021-01-01", to = "2021-12-31")
 sp500_test <- Cl(GSPC)
 
 # Apply MACD with optimal parameters to test data
-macd_test <- MACD(sp500_test, nFast = fast_opt, nSlow = slow_opt, nSig = signal_opt, maType = "SMA")
+macd_test <- MACD(sp500_test, nFast = fast_opt, nSlow = slow_opt, nSig = signal_opt, maType = "EMA")
 
 # Generate trading signals for test data
 trading_signal_test <- lag(ifelse(macd_test$macd > macd_test$signal, 1, -1))
