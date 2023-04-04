@@ -134,8 +134,35 @@ print(majority_signal)
 # eval here
 
 all_signals <- data.frame(pool_signals, majority_signal)
-
 print(all_signals)
+
+# Grammars
+
+library(gramEvol)
+
+# Expects small, med, big, common
+get_grammar_signal <- function(signals) {
+  # Define our grammar
+  rules <- list(expr = grule(op(expr, expr),var),
+              op = grule('+', '-', '*'),
+              var = grule(signals$small, signals$med, signals$big, signals$common))
+
+  # Create grammar from rules
+  grammar <- CreateGrammar(rules)
+
+  grammar_fitness <- function(expr) {
+    signal <- eval(expr)
+    return(-get_profit(signal,training_index))
+  }
+
+  ge <- GrammaticalEvolution(grammar, grammar_fitness, iterations = 500, max.depth = 5)
+  expr <- ge$best$expressions
+  return(expr)
+}
+
+all_signals <- data.frame(small=signal_small, med=signal_med, big=signal_big, common=signal_common)
+names(all_signals) <- c('small','med','big','common')
+grammar_signal <- get_grammar_signal(all_signals)
 
 # daily_returns_opt <- dailyReturn(sp500)
 # strategy_returns_opt <- daily_returns_opt * trading_signal_opt
