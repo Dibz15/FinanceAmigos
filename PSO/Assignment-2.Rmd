@@ -382,7 +382,7 @@ backtest_results = function(predicted, actual, normalized_data, buy_threshold = 
     denormalized_data
   }
   
-  shift_and_denormalize = function(predicted, actual) {
+  shift_and_denormalize = function(predicted, actual, col_mins, col_ranges) {
     # Implement your trading strategy and backtest it using the predicted_test_prices
     shifted_predicted <- predicted[-1,] # Remove the first element
     actual_trimmed <- actual[-length(actual),] # Remove the last element
@@ -390,12 +390,12 @@ backtest_results = function(predicted, actual, normalized_data, buy_threshold = 
     # This is so that instead of it being today predicted : today actual for signal, it is
     # tomorrow predicted : today actual
     
-    shifted_predicted = denormalize_data(shifted_predicted, normalized_data$col_mins["Close_Price"], normalized_data$col_ranges["Close_Price"])
-    actual_trimmed = denormalize_data(actual_trimmed, normalized_data$col_mins["Close_Price"], normalized_data$col_ranges["Close_Price"])
+    shifted_predicted = denormalize_data(shifted_predicted, col_mins["Close_Price"], col_ranges["Close_Price"])
+    actual_trimmed = denormalize_data(actual_trimmed, col_mins["Close_Price"], col_ranges["Close_Price"])
     list(predicted = shifted_predicted, actual = actual_trimmed)
   }
 
-  shifted_and_trimmed = shift_and_denormalize(predicted, actual)
+  shifted_and_trimmed = shift_and_denormalize(predicted, actual, normalized_data$col_mins, normalized_data$col_ranges)
   shifted_predicted = shifted_and_trimmed$predicted
   actual_trimmed = shifted_and_trimmed$actual
   
@@ -420,12 +420,12 @@ backtest_results = function(predicted, actual, normalized_data, buy_threshold = 
       buy_and_hold_value[i] = buy_and_hold_shares * actual_value[i]
       
       if (signals[i] == "Buy" && cash >= actual_value[i]) {
-        investment_amount <- cash * predicted_profit_pct[i]
+        investment_amount <- cash * abs(predicted_profit_pct[i])
         num_shares_bought <- floor(investment_amount / actual_value[i])
         num_shares <- num_shares + num_shares_bought
         cash <- cash - (num_shares_bought * actual_value[i])
       } else if (signals[i] == "Sell" && num_shares > 0) {
-        sell_amount <- num_shares * actual_value[i] * (-predicted_profit_pct[i])
+        sell_amount <- num_shares * actual_value[i] * abs(predicted_profit_pct[i])
         num_shares_sold <- floor(sell_amount / actual_value[i])
         num_shares <- num_shares - num_shares_sold
         cash <- cash + (num_shares_sold * actual_value[i])
@@ -522,7 +522,6 @@ full_evaluation = function(optimal_params, model, test_data, normal_data, cash=1
                    sell_threshold,
                    initial_cash = cash)
   
-  
   plot_backtest(dates, backtest_series)
 }
 ```
@@ -568,3 +567,61 @@ full_evaluation(optimal_params, train_model, normal_data_aapl$data, normal_data_
 ```
 
 Reasons for why the model is successful and what is it doing.
+
+```{r}
+predict_real_days = function(optimal_params, model, test_data, normal_data, buy_threshold=0.02, sell_threshold=-0.02) {
+  lookback_window = optimal_params[4]
+  horizon = 1
+  results = evaluate_final_model(optimal_params, model, test_data, horizon)
+  # Combine the actual prices, predicted prices, and trading signals into one data frame
+  dates <- as.Date(index(test_data)[(lookback_window + horizon + 1):(nrow(test_data))])
+  
+  denormalize_data <- function(normalized_data, col_min, col_range) {
+    denormalized_data <- normalized_data * col_range + col_min
+    denormalized_data
+  }
+  
+  shift_and_denormalize = function(predicted, actual, col_mins, col_ranges) {
+    # Implement your trading strategy and backtest it using the predicted_test_prices
+    shifted_predicted <- predicted[-1,] # Remove the first element
+    actual_trimmed <- actual[-length(actual),] # Remove the last element
+    
+    # This is so that instead of it being today predicted : today actual for signal, it is
+    # tomorrow predicted : today actual
+    
+    shifted_predicted = denormalize_data(shifted_predicted, col_mins["Close_Price"], col_ranges["Close_Price"])
+    actual_trimmed = denormalize_data(actual_trimmed, col_mins["Close_Price"], col_ranges["Close_Price"])
+    list(predicted = shifted_predicted, actual = actual_trimmed)
+  }
+
+  shifted_and_trimmed = shift_and_denormalize(results$predicted, results$actual, normal_data$col_mins, normal_data$col_ranges)
+  shifted_predicted = shifted_and_trimmed$predicted
+  actual_trimmed = shifted_and_trimmed$actual
+  
+  # backtest_series = backtest_results(results$predicted, results$actual, normal_data, 
+  #                  buy_threshold, 
+  #                  sell_threshold,
+  #                  initial_cash = cash)
+  
+  predicted_profit_pct <- (shifted_predicted - actual_trimmed) / actual_trimmed
+  trading_signals <- ifelse(predicted_profit_pct > buy_threshold, "Buy",
+                            ifelse(predicted_profit_pct < sell_threshold, "Sell", "Hold"))
+  
+  shifted_and_dated_data <- data.frame(Date = dates, 
+                                       Actual = actual_trimmed, 
+                                       Predicted = shifted_predicted, 
+                                       Profit = predicted_profit_pct, 
+                                       Signals = trading_signals)
+  print(shifted_and_dated_data)
+}
+
+symbol <- "TSLA"
+start_date <- as.Date("2022-08-01")
+end_date <- as.Date("2023-04-04")
+stock_data_aapl <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
+
+normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
+full_evaluation(optimal_params, train_model, normal_data_aapl$data, normal_data_aapl, buy_threshold=0.01, sell_threshold=-0.04)
+predict_real_days(optimal_params, train_model, normal_data_aapl$data, normal_data_aapl, buy_threshold=0.01, sell_threshold=-0.04)
+```
+
