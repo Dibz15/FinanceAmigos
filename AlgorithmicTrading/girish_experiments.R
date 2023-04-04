@@ -163,8 +163,7 @@ ggplot(cumsum_signals_test, aes(x = index(cumsum_signals_test))) +
   geom_line(aes(y = test_signal_common, color = "test_signal_common")) +
   labs(title = "Cumulative sum of signals", x = "Date", y = "Cumulative sum of signals") +
   theme_minimal()
-     
-pool_values_test <- data.frame(
+     pool_values_test <- data.frame(
   get_investment_values(parameter_small, test_year), get_investment_values(parameter_med, test_year),
   get_investment_values(parameter_big, test_year), get_investment_values(parameter_common, test_year)
 )
@@ -189,6 +188,39 @@ ggplot(cumsum(all_signals_test), aes(x = index(all_signals_test))) +
   geom_line(aes(y = majority_signal_test, color = "majority_signal_test")) +
   labs(title = "Cumulative sum of signals", x = "Date", y = "Cumulative sum of signals") +
   theme_minimal()
+
+# Grammars
+
+library(gramEvol)
+
+# Expects small, med, big, common
+get_grammar_expr <- function(signals) {
+  # Define our grammar
+  rules <- list(expr = grule(op(expr, expr),var),
+              op = grule('+', '-', '*'),
+              var = grule(signals$small, signals$med, signals$big, signals$common))
+
+  # Create grammar from rules
+  grammar <- CreateGrammar(rules)
+
+  grammar_fitness <- function(expr) {
+    signal <- eval(expr)
+    return(-get_profit(signal,training_index))
+  }
+
+  ge <- GrammaticalEvolution(grammar, grammar_fitness, iterations = 500, max.depth = 5)
+  expr <- ge$best$expressions
+  return(expr)
+}
+
+get_grammar_signal <- function(signals,expr) {
+  return(eval(expr))
+}
+
+all_signals <- data.frame(small=signal_small, med=signal_med, big=signal_big, common=signal_common)
+names(all_signals) <- c('small','med','big','common')
+grammar_expr <- get_grammar_expr(all_signals)
+grammar_signal <- get_grammar_signal(all_signals,grammar_expr)
 
 # daily_returns_opt <- dailyReturn(sp500)
 # strategy_returns_opt <- daily_returns_opt * trading_signal_opt
