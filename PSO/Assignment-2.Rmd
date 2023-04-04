@@ -39,6 +39,12 @@ tensorflow::install_tensorflow(version = "2.11.0", gpu = TRUE)
 tf_config()
 ```
 
+## Overview Diagram
+
+```{r, out.width='70%', fig.align='center', echo=FALSE}
+knitr::include_graphics("./PSO_LSTM_Training.png")
+```
+The above diagram is an overview of our PSO training process, including the preprocessing steps (explained below), PSO meta-optimisation, and final model training and inference.
 
 ## Simple Moving Average (SMA)
 
@@ -57,7 +63,9 @@ When applied to financial time-series data like stock prices, the **Relative Str
 
 ## Moving Average Convergence Divergence (MACD)
 
-For financial time-series data like stock prices, the **Moving Average Convergence Divergence (MACD)** is a trend-following momentum indicator that can assist traders spot reversals in trend direction, momentum, and potential. It is calculated by subtracting the 26-period EMA from the 12-period EMA, resulting in the MACD line. To further aid in the identification of bullish or bearish trends, this line is drawn in conjunction with a 9-period EMA signal line. A bullish signal is given when the MACD line rises above the signal line. This might indicate a good time to purchase. When the MACD line drops below the signal line, however, it's interpreted as a bearish indication and may signify a good time to sell. MACD divergence from price action can signal an imminent trend reversal. For example, the 12-day EMA is $50, and the 26-day EMA is $48, resulting in a MACD line value of $2. The 9-day EMA signal line is $1.5. Since the MACD line ($2) is above the signal line ($1.5), it indicates that the shorter-term (12-day) momentum is stronger than the longer-term (26-day) momentum, suggesting a bullish trend. In this scenario, traders may consider it a potential buying opportunity.. If the MACD line and price action diverge, it may suggest a trend reversal, warranting caution in trading decisions. The MACD is most commonly used with daily periods, where the traditional settings of 12, 26, and 9 days are standard. **Reference:** <https://www.investopedia.com/terms/m/macd.asp>
+For financial time-series data like stock prices, the **Moving Average Convergence Divergence (MACD)** is a trend-following momentum indicator that can assist traders spot reversals in trend direction, momentum, and potential. It is calculated by subtracting the 26-period EMA from the 12-period EMA, resulting in the MACD line. To further aid in the identification of bullish or bearish trends, this line is drawn in conjunction with a 9-period EMA signal line. A bullish signal is given when the MACD line rises above the signal line. This might indicate a good time to purchase. When the MACD line drops below the signal line, however, it's interpreted as a bearish indication and may signify a good time to sell. MACD divergence from price action can signal an imminent trend reversal. For example, the 12-day EMA is \$50, and the 26-day EMA is \$48, resulting in a MACD line value of \$2. The 9-day EMA signal line is \$1.5. Since the MACD line (\$2) is above the signal line (\$1.5), it indicates that the shorter-term (12-day) momentum is stronger than the longer-term (26-day) momentum, suggesting a bullish trend. In this scenario, traders may consider it a potential buying opportunity.. If the MACD line and price action diverge, it may suggest a trend reversal, warranting caution in trading decisions. The MACD is most commonly used with daily periods, where the traditional settings of 12, 26, and 9 days are standard. **Reference:** <https://www.investopedia.com/terms/m/macd.asp>
+
+## Bollinger Bands 
 
 ## Bollinger Bands
 
@@ -78,7 +86,8 @@ It's important to note that Bollinger Bands, like any other technical indicator,
 **Reference:** <https://www.investopedia.com/terms/b/bollingerbands.asp>
 
 
-```{r}
+
+```{r, echo=F}
 prepare_stock_data = function(stock_data) {
   # Close price
   close_price <- Cl(stock_data)
@@ -114,6 +123,7 @@ prepare_stock_data = function(stock_data) {
 ```
 
 
+
 ```{r, echo=F}
 plot_stock = function(prepped_stock_data) {
   # Convert xts object to data frame
@@ -144,10 +154,9 @@ plot_stock = function(prepped_stock_data) {
 }
 ```
 
-Explain the plot
+## Train/Test Split
 
-
-```{r}
+```{r, echo=F}
 train_test_split = function(stock_data) {
   # Calculate the number of rows for each set
   n_rows <- nrow(stock_data$data)
@@ -167,10 +176,11 @@ train_test_split = function(stock_data) {
 }
 ```
 
-In the above code chunk, the train_test_split function in the provided R code takes a stock_data object and splits it into three subsets: training (70%), validation (15%), and test (15%). This custom function calculates the number of rows for each set, extracts the respective portions of data, and returns a list containing the three datasets for model training, hyperparameter tuning, and evaluation.
+The train_test_split function in the provided R code takes a stock_data object and splits it into three subsets: training (70%), validation (15%), and test (15%). This custom function calculates the number of rows for each set, extracts the respective portions of data, and returns a list containing the three datasets for model training, hyperparameter tuning, and evaluation. We train the LSTM model on the training set, and evaluate using the validation data during training. Our final tests are performed using the validation and testing data.
 
+## Normalisation
 
-```{r}
+```{r, echo=F}
 normalize_data <- function(data) {
   col_mins <- apply(data, 2, min)
   col_maxs <- apply(data, 2, max)
@@ -183,7 +193,7 @@ normalize_data <- function(data) {
 }
 ```
 
-```{r}
+```{r, echo=F}
 denormalize_data <- function(normalized_data, col_mins, col_ranges) {
   denormalized_data <- sweep(normalized_data, 2, col_ranges, FUN = "*")
   denormalized_data <- sweep(denormalized_data, 2, col_mins, FUN = "+")
@@ -192,10 +202,9 @@ denormalize_data <- function(normalized_data, col_mins, col_ranges) {
 }
 ```
 
-In the above 2 code chunks, we are providing 2 functions for normalizing and denormalizing the data. The normalize_data function scales the input data to a range between 0 and 1, while the denormalize_data function reverses this process, restoring the data to its original range.
-**Normalization** is a process where the numerical data are often normalised to a range between 0 and 1 as a preprocessing step.The performance of machine learning algorithms can be enhanced by using this method to reduce the effect of variables with varying scales. In contrast, **Denormalization** involves reversing normalisation by rescaling the data to its original range.
+We are using two functions for normalising and denormalising the data. The normalize_data function scales the input data to a range between 0 and 1, while the denormalize_data function reverses this process, restoring the data to its original range. **Normalisation** is a process where the numerical data are often normalised to a range between 0 and 1 as a preprocessing step. The performance of machine learning algorithms can be enhanced by using this method to reduce the effect of variables with varying scales. In contrast, **Denormalisation** involves reversing normalisation by rescaling the data to its original range. We are utilising normalisation as a preprocessing step because we found empirically that performance is drastically improved by normalisation. This is likely because neural networks perform best in the [-1, 1] range due to activations, as well as the fact that normalisation puts all the features in the same absolute range. When certain features are at a much different scale (e.g. RSI vs Closing Price) this can hurt the performance of the NN.
 
-
+## Preprocessing using Sliding Windows
 ```{r}
 preprocess_data <- function(data, lookback_window, horizon) {
   # Normalize the data
@@ -213,7 +222,7 @@ preprocess_data <- function(data, lookback_window, horizon) {
 }
 ```
 
-In the above code chunk, the preprocess_data function in the provided R code preprocesses the input data for time series prediction by creating input-output pairs for a given lookback window and prediction horizon. In order to store the input data and the desired values, it makes two arrays, x and y. The function iterates through the data, extracting segments of the lookback window size for input and the corresponding target values, based on the prediction horizon. It returns a list containing the input-output pairs (x and y).
+In the above code chunk, the preprocess_data function in the provided R code preprocesses the input data for time series prediction by creating input-output pairs for a given lookback window and prediction horizon. In order to store the input data and the desired values, it makes two arrays, x and y. The function iterates through the data, extracting segments using a sliding window of the lookback window size for input and the corresponding target values, based on the prediction horizon. It returns a list containing the input-output pairs (x and y). This allows the NN model to see just the required input data with a ground-truth price for output comparison.
 
 
 ## Long Short-Term Memory (LSTM)
@@ -230,10 +239,12 @@ Fjellström, C. (2022). Long short-term memory neural network for financial time
 <https://arxiv.org/pdf/2201.08218.pdf>
 
 
+
 ```{r}
 build_lstm_model <- function(input_shape, learning_rate, regularization) {
   model <- keras_model_sequential() %>%
-    layer_lstm(units = 20, input_shape = input_shape, return_sequences=TRUE, kernel_regularizer = regularizer_l2(l = regularization)) %>%
+    layer_lstm(units = 20, input_shape = input_shape, return_sequences=TRUE, 
+               kernel_regularizer = regularizer_l2(l = regularization)) %>%
     layer_dropout(rate=0.5) %>%
     layer_lstm(units = 10, kernel_regularizer = regularizer_l2(l = regularization)) %>%
     layer_dropout(rate=0.5) %>%
@@ -264,12 +275,11 @@ The layers of the model are as follows:
 The compile function is used to set up the model for training after the architecture has been defined. Mean Squared Error (MSE) is chosen as the loss function, which is typically employed for regression issues, and Adam is chosen as the optimizer with the learning rate given. Finally, the build_lstm_model function returns the compiled LSTM model, which can be used for training and predicting on financial time series data. **References:** <https://medium.com/geekculture/10-hyperparameters-to-keep-an-eye-on-for-your-lstm-model-and-other-tips-f0ff5b63fcd4>
 
 
-
 ## Particle Swarm Optimization (PSO)
 
 Particle swarm optimisation (PSO) is a robust optimisation technique used in artificial intelligence for finance to discover optimal solutions to complicated financial issues, and it was inspired by the social behaviour of flocking birds. This metaheuristic search technique is population-based; it maintains a swarm of particles (solutions) and repeatedly adjusts their positions depending on both local and global solutions found so far. This can be used with virtually any model type that has tunable parameters or weights. The choice of model depends on the specific problem you're trying to solve and the characteristics of the data. In the context of finance, PSO may be used for portfolio optimisation, with each particle representing a possible distribution of funds over a collection of assets. 
 
-## Insert Diagram and Explain
+### PSO Fitness Function
 
 ```{r}
 mse_fitness_function <- function(pso_params, train_data, val_data, horizon) {
@@ -288,7 +298,8 @@ mse_fitness_function <- function(pso_params, train_data, val_data, horizon) {
   )
   
   current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
-  log_dir <- paste0("logs/fit/", current_time, "_lr_", learning_rate, "_reg_", regularization, "_epochs_", epochs, "_lookback_", lookback_window)
+  log_dir <- paste0("logs/fit/", current_time, "_lr_", learning_rate, "_reg_", regularization, 
+                    "_epochs_", epochs, "_lookback_", lookback_window)
   
   # Initialize tensorboard callback with the unique log directory
   tensorboard_callback <- callback_tensorboard(log_dir = log_dir)
@@ -308,10 +319,11 @@ mse_fitness_function <- function(pso_params, train_data, val_data, horizon) {
 }
 ```
 
+In the above code chunk we define our PSO fitness function as `mse_fitness_function`. We are using PSO to optimise the training hyperparameters of our LSTM network which will be used for future price prediction. In the fitness function, we preprocess the training and validation data with the appropriate lookback window and horizon value. We then build the LSTM model with the appropriate learning rate and regularisation values. Then, the model is trained with a batch size of 32 and the number of epochs decided by the PSO algorithm.
 
+## Training
 
-
-```{r, fig.align='center'}
+```{r, fig.align='center', fig.width=6, fig.height=3}
 # Split the data into training, validation, and test sets
 
 symbol <- "AMD"
@@ -329,23 +341,25 @@ train_data = split_data_training$train
 validation_data = split_data_training$val
 test_data = split_data_training$test
 ```
+### Data Selection 
 
+In the above plot, we have plotted a time series of all of our input features into the model. These are explained in detail in the previous sections. In the plot, it's easy to see how different features are at different scales, which is why the normalisation is necessary. In this example, we have decided to optimise and train our model using data from the closing prices of AMD (Advanced Micro Devices, Inc.) on the NYSE (New York Stock Exchange). The time period selected is from January, 2018 to January, 2023. This is then split into train, validation, and test sets and preprocessed with normalisation.
 
-```{r}
+### Hyperparameter Bounds Selection
+```{r, echo=F}
 lower_bounds <- c(0.0001, 0.001, 10, 5)
 upper_bounds <- c(0.005, 0.01, 100, 50)
 initial_weights <- runif(4, min=lower_bounds, max=upper_bounds)
 ```
 
-In the above code chunk, we are defining the lower and upper bounds for each of the LSTM hyperparameters to be optimized by PSO. We are then generating an initial set of hyperparameters randomly within these bounds. The specific hyperparameters being optimized are:
+We have defined the lower and upper bounds for each of the LSTM hyperparameters to be optimized by PSO. We are then generating an initial set of hyperparameters randomly within these bounds. The specific hyperparameters being optimized are:
 
 Learning rate: Ranges from 0.0001 to 0.005.
 Regularization: Ranges from 0.001 to 0.01.
 Epochs: Ranges from 10 to 100.
 Lookback window: Ranges from 5 to 50.
 
-With these initial hyperparameters, we can apply the PSO algorithm to find the optimal values for each parameter within their specified bounds. This will allow us to minimize the mean squared error (MSE) and improve the LSTM model's predictive accuracy for stock prices.
-
+With these initial hyperparameters, we can apply the PSO algorithm to find the optimal values for each parameter within their specified bounds. This will allow us to minimize the mean squared error (MSE) and improve the LSTM model's predictive accuracy for stock prices. The bounds for the algorithm were found empirically to be a range of values that maintain fairly stable performance. With that said, it's still necessary for the PSO algorithm to find the optimal set of parameters.
 
 ```{r eval=FALSE, echo=TRUE, message=FALSE, include=FALSE}
 result <- psoptim( 
@@ -363,18 +377,15 @@ result <- psoptim(
 optimal_params <- result$par
 ```
 
-After running the PSO algorithm for 20 iterations, it found the below optimal parameters. We are putting them in here manually to avoid unnecessary time for re-computing the parameters by re-running the PSO process.
+Above, we run the PSO algorithm for 20 iterations. More iterations would be preferable, but due to our lack of accss to appropriate GPU resources the training process was found to take too long for more iterations. After running the PSO algorithm for 20 iterations, it found the below optimal parameters. We are putting them in here manually to avoid unnecessary time for re-computing the parameters by re-running the PSO process.
 
-
-- We are getting the below hyperparameters from tensorboard.
+Our training sessions were logged to tensorboard, and by evaluating the performance of the different iterations we found the below optimal hyperparameters:
 ```{r}
 optimal_params = c(0.00221, 0.00415, 55, 24) # LR, L2 regularisation, epochs, lookback window
 ```
 
-
-
---> Using the optimal hyperparameters to train the model for evaluation
-```{r}
+## Evaluation
+```{r, echo=F}
 train_final_model = function(optimal_params, train_data, val_data, horizon) {
   # Extract the optimal parameters from the PSO result
   learning_rate <- optimal_params[1]
@@ -408,18 +419,16 @@ train_final_model = function(optimal_params, train_data, val_data, horizon) {
 }
 ```
 
-
-```{r, cache=TRUE, results="hide"}
+Using the optimal hyperparameters, we here train our final evaluation model using the training and validation data. The below plot shows the training and validations loss (MSE) per epoch of training.
+```{r, results="hide"}
 train_model = train_final_model(optimal_params, train_data, validation_data, horizon=1)
 ```
 
 
-```{r, fig.width=3, fig.height=2, fig.align='center', echo=FALSE}
+```{r, out.width='50%', fig.align='center', echo=FALSE}
 knitr::include_graphics("./final_train_amd.png")
 ```
 
-
--> evaluating the optimal model and producing the predicted values for the test set.
 ```{r}
 evaluate_final_model = function(optimal_params, model, test_data, horizon) {
   learning_rate <- optimal_params[1]
@@ -450,6 +459,7 @@ evaluate_final_model = function(optimal_params, model, test_data, horizon) {
 }
 ```
 
+The code above is used to evaluate the model's final performance on validation data, and create set of price predictions from the test data set. 
 
 ## Backtesting
 
@@ -473,7 +483,7 @@ To sum up, backtesting is crucial for evaluating the efficacy of artificial inte
 
 **References: **<https://www.investopedia.com/terms/b/backtesting.asp>
 
-```{r}
+```{r, echo=F}
 backtest_results = function(predicted, actual, normalized_data, buy_threshold = 0.05, sell_threshold = -0.05, initial_cash = 10000) {
   denormalize_data <- function(normalized_data, col_min, col_range) {
     denormalized_data <- normalized_data * col_range + col_min
@@ -555,9 +565,41 @@ backtest_results = function(predicted, actual, normalized_data, buy_threshold = 
 }
 ```
 
-Explain the above code chunk in brief.
+For our backtesting process, we take the 'predicted' and 'actual' sets of prices from our evaluation function. Then, this data is 'denormalised' to return it back to its original range ($) rather than being [0, 1]. Then, the predicted values are shifted back by 1 day in order for the prediction for 'tomorrow' to be compared to the actual price for 'today'. The most important part of the backtesting code is the backtesting loop, repeated below:
 
+```{r, eval=F, include=T, echo=T}
+# Predict daily profit
+predicted_profit_pct <- (shifted_predicted - actual_trimmed) / actual_trimmed
+# Generate trading signals
+trading_signals <- ifelse(predicted_profit_pct > buy_threshold, "Buy",
+                          ifelse(predicted_profit_pct < sell_threshold, "Sell", "Hold"))
 
+# Backtesting loop
+for (i in 1:(length(signals) - 1)) {
+  cash_value[i] <- cash
+  buy_and_hold_value[i] = buy_and_hold_shares * actual_value[i]
+  
+  if (signals[i] == "Buy" && cash >= actual_value[i]) {
+    investment_amount <- cash * abs(predicted_profit_pct[i])
+    num_shares_bought <- floor(investment_amount / actual_value[i])
+    num_shares <- num_shares + num_shares_bought
+    cash <- cash - (num_shares_bought * actual_value[i])
+  } else if (signals[i] == "Sell" && num_shares > 0) {
+    sell_amount <- num_shares * actual_value[i] * abs(predicted_profit_pct[i])
+    num_shares_sold <- floor(sell_amount / actual_value[i])
+    num_shares <- num_shares - num_shares_sold
+    cash <- cash + (num_shares_sold * actual_value[i])
+  }
+  
+  asset_value[i] = num_shares * actual_value[i]
+  total_portfolio_value[i] = cash + asset_value[i]
+}
+    
+```
+
+Basically, the actual/predicted values are used to predict a daily amount of profit (percent > 0) or loss (percent < 0). Then, this is used to generate a vector of trading signals; "Buy", "Hold", and "Sell". The signals are then iterated, and for each "Buy"/"Sell" signal a proportional investment is made based on the predicted profit or loss. For example, if the predicted profit for the following day is 3%, then 3% of our total "cash" is invested into the asset. If the predicted loss is 2%, then 2% of our total held asset is sold. 
+
+We also tried this with alternative strategies, such as only buy/selling a single share (or a constant number of shares) at each signal, or always buying/selling with a fixed proportion of our portfolio (e.g. always purchasing with 5% of our current "cash"). We found that the system that is proportional with the amount of predicted profit/loss performed the best. In the end, several time series are created to store this information so that the portfolio value over time can be monitored and plotted.
 
 ```{r, echo=F}
 # The rest of the code for calculating the final portfolio value and plotting remains the same
@@ -605,12 +647,6 @@ plot_backtest = function(dates, backtest_series) {
 # cat("Buy and Hold Final Value:", backtest_series$BuyAndHold[nrow(backtest_series)], "\n")
 ```
 
-Explain the plot generated from the code chunk above.
-
-
-
-- Taking the trained model & predicting values and then using backtesting with a starting portfolio value
-
 ```{r, echo=F}
 full_evaluation = function(optimal_params, model, test_data, normal_data, cash=100000, buy_threshold=0.02, sell_threshold=-0.02) {
   lookback_window = optimal_params[4]
@@ -629,8 +665,8 @@ full_evaluation = function(optimal_params, model, test_data, normal_data, cash=1
 ```
 
 
-```{r, results="hide", fig.keep='all', fig.align='center'}
-full_evaluation(optimal_params, train_model, test_data, normal_data_training)
+```{r, results="hide", echo=F}
+# full_evaluation(optimal_params, train_model, test_data, normal_data_training)
 ```
 
 
@@ -643,34 +679,36 @@ normalize_data2 <- function(data_to_normalize, col_mins, col_ranges) {
 ```
 
 
-
-
 Compare both the outputs.
 
-```{r, results="hide", fig.keep='all', fig.align='center'}
+```{r, results="hide", fig.keep='all', fig.align='center', fig.width=7, fig.height=4}
 symbol <- "AMD"
 start_date <- as.Date("2021-08-01")
 end_date <- as.Date("2023-04-01")
 stock_data_test <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
 
 
-normal_data2 = normalize_data2(prepare_stock_data(stock_data_test), normal_data_training$col_mins, normal_data_training$col_ranges)
+normal_data2 = normalize_data2(prepare_stock_data(stock_data_test), 
+                               normal_data_training$col_mins, normal_data_training$col_ranges)
 full_evaluation(optimal_params, train_model, normal_data2, normal_data_training, cash=100000)
 ```
 
-```{r, results="hide", fig.keep='all', fig.align='center'}
+
+
+```{r, results="hide", fig.keep='all', fig.align='center', fig.width=7, fig.height=4}
 symbol <- "GOOGL"
 start_date <- as.Date("2021-08-01")
 end_date <- as.Date("2023-04-01")
 stock_data_aapl <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
 
 normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
-full_evaluation(optimal_params, train_model, normal_data_aapl$data, normal_data_aapl, cash=100000, buy_threshold=0.02, sell_threshold=-0.05)
+full_evaluation(optimal_params, train_model, normal_data_aapl$data, 
+                normal_data_aapl, cash=100000, buy_threshold=0.02, sell_threshold=-0.05)
 ```
 
 Reasons for why the model is successful and what is it doing.
 
-```{r}
+```{r, hide='all', echo=F}
 predict_real_days = function(optimal_params, model, test_data, normal_data, buy_threshold=0.02, sell_threshold=-0.02) {
   lookback_window = optimal_params[4]
   horizon = 1
@@ -714,7 +752,10 @@ predict_real_days = function(optimal_params, model, test_data, normal_data, buy_
                                        Predicted = shifted_predicted, 
                                        Profit = predicted_profit_pct, 
                                        Signals = trading_signals)
-  print(shifted_and_dated_data)
+  
+  rownames(shifted_and_dated_data) = shifted_and_dated_data$Date
+  shifted_and_dated_data$Date = NULL
+  return(shifted_and_dated_data)
 }
 
 symbol <- "TSLA"
@@ -723,7 +764,16 @@ end_date <- as.Date("2023-04-04")
 stock_data_aapl <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
 
 normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
-full_evaluation(optimal_params, train_model, normal_data_aapl$data, normal_data_aapl, buy_threshold=0.01, sell_threshold=-0.04)
-predict_real_days(optimal_params, train_model, normal_data_aapl$data, normal_data_aapl, buy_threshold=0.01, sell_threshold=-0.04)
+# full_evaluation(optimal_params, train_model, normal_data_aapl$data, normal_data_aapl, buy_threshold=0.01, sell_threshold=-0.04)
 ```
+
+```{r, hide='all'}
+predicted_days = predict_real_days(optimal_params, train_model, normal_data_aapl$data, 
+                                   normal_data_aapl, buy_threshold=0.01, sell_threshold=-0.04)
+```
+
+```{r}
+print(predicted_days[(nrow(predicted_days) - 5):(nrow(predicted_days) - 1),])
+```
+
 
