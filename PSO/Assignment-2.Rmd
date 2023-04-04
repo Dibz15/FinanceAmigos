@@ -524,13 +524,13 @@ backtest_results = function(predicted, actual, normalized_data, buy_threshold = 
   
   backtest_loop = function(predicted_profit_pct, portfolio_value, signals, actual_value) {
     cash <- portfolio_value
-    num_shares <- 0
+    num_shares <- 0 #portfolio_value / actual_value[1]
     # Initialize the cash_value vector
     cash_value <- rep(NA, length(signals))
     asset_value = rep(NA, length(signals))
     total_portfolio_value = rep(NA, length(signals))
     buy_and_hold_value = rep(NA, length(signals))
-    buy_and_hold_shares = floor(cash / actual_value[1])
+    buy_and_hold_shares = floor(portfolio_value / actual_value[1])
     
     # Backtesting loop
     for (i in 1:(length(signals) - 1)) {
@@ -538,12 +538,12 @@ backtest_results = function(predicted, actual, normalized_data, buy_threshold = 
       buy_and_hold_value[i] = buy_and_hold_shares * actual_value[i]
       
       if (signals[i] == "Buy" && cash >= actual_value[i]) {
-        investment_amount <- cash * abs(predicted_profit_pct[i])
+        investment_amount <- min(cash, cash * abs(predicted_profit_pct[i]))
         num_shares_bought <- floor(investment_amount / actual_value[i])
         num_shares <- num_shares + num_shares_bought
         cash <- cash - (num_shares_bought * actual_value[i])
       } else if (signals[i] == "Sell" && num_shares > 0) {
-        sell_amount <- num_shares * actual_value[i] * abs(predicted_profit_pct[i])
+        sell_amount <- min(num_shares * actual_value[i], num_shares * actual_value[i] * abs(predicted_profit_pct[i]))
         num_shares_sold <- floor(sell_amount / actual_value[i])
         num_shares <- num_shares - num_shares_sold
         cash <- cash + (num_shares_sold * actual_value[i])
@@ -590,12 +590,12 @@ for (i in 1:(length(signals) - 1)) {
   buy_and_hold_value[i] = buy_and_hold_shares * actual_value[i]
   
   if (signals[i] == "Buy" && cash >= actual_value[i]) {
-    investment_amount <- cash * abs(predicted_profit_pct[i])
+    investment_amount <- min(cash, cash * abs(predicted_profit_pct[i]))
     num_shares_bought <- floor(investment_amount / actual_value[i])
     num_shares <- num_shares + num_shares_bought
     cash <- cash - (num_shares_bought * actual_value[i])
   } else if (signals[i] == "Sell" && num_shares > 0) {
-    sell_amount <- num_shares * actual_value[i] * abs(predicted_profit_pct[i])
+    sell_amount <- min(num_shares * actual_value[i], num_shares * actual_value[i] * abs(predicted_profit_pct[i]))
     num_shares_sold <- floor(sell_amount / actual_value[i])
     num_shares <- num_shares - num_shares_sold
     cash <- cash + (num_shares_sold * actual_value[i])
@@ -700,7 +700,7 @@ stock_data_test <- getSymbols(symbol, src = "yahoo", from = start_date, to = end
 
 normal_data2 = normalize_data2(prepare_stock_data(stock_data_test), 
                                normal_data_training$col_mins, normal_data_training$col_ranges)
-full_evaluation(optimal_params, train_model, normal_data2, normal_data_training, cash=100000)
+full_evaluation(optimal_params, train_model, normal_data2, normal_data_training, cash=100000, buy_threshold = 0.02, sell_threshold = -0.02)
 ```
 
 In the above chart, we show a time series of the different tracked values for our backtesting experiment. In this case, we have used our trained LSTM model to  predict the future prices of AMD, and then use that information to make decisions to buy, hold, or sell the stock. In the top plot, the price of the stock is listed using a blue line. Set on top of this line are our signals. Green for buy, red for sell, and purple for hold. The yellow line represents the asset value predicted by the LSTM model, each day at a time. 
@@ -719,7 +719,7 @@ stock_data_aapl <- getSymbols(symbol, src = "yahoo", from = start_date, to = end
 
 normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
 full_evaluation(optimal_params, train_model, normal_data_aapl$data, 
-                normal_data_aapl, cash=100000, buy_threshold=0.02, sell_threshold=-0.05)
+                normal_data_aapl, cash=100000, buy_threshold=0.02, sell_threshold=-0.02)
 ```
 Above we plot another experiment with backtesting using data for the S&P 500 Index (in this case, the ticker SPY represents an ETF (exchange-traded fund) that matches the overall index). 
 
@@ -840,6 +840,4 @@ predicted_days = predict_real_days(optimal_params, train_model, normal_data_aapl
 ```{r}
 print(predicted_days[(nrow(predicted_days) - 4):(nrow(predicted_days)),])
 ```
-
-
 
