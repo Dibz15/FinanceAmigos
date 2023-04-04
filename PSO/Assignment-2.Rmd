@@ -279,6 +279,9 @@ The compile function is used to set up the model for training after the architec
 
 Particle swarm optimisation (PSO) is a robust optimisation technique used in artificial intelligence for finance to discover optimal solutions to complicated financial issues, and it was inspired by the social behaviour of flocking birds. This metaheuristic search technique is population-based; it maintains a swarm of particles (solutions) and repeatedly adjusts their positions depending on both local and global solutions found so far. This can be used with virtually any model type that has tunable parameters or weights. The choice of model depends on the specific problem you're trying to solve and the characteristics of the data. In the context of finance, PSO may be used for portfolio optimisation, with each particle representing a possible distribution of funds over a collection of assets. 
 
+**References:** <http://www.turingfinance.com/portfolio-optimization-using-particle-swarm-optimization/>
+
+
 ### PSO Fitness Function
 
 ```{r}
@@ -767,6 +770,12 @@ normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
 # full_evaluation(optimal_params, train_model, normal_data_aapl$data, normal_data_aapl, buy_threshold=0.01, sell_threshold=-0.04)
 ```
 
+## Buy and Hold vs LSTM Prediction Algorithm
+
+Buy and Hold is a passive, long-term investment strategy based on fundamental analysis and has limited risk management options. It doesn't require historical data and doesn't adapt to market changes.  In contrast, the LSTM Prediction Algorithm is a proactive trading strategy that may take advantage of both immediate and past market conditions. It's a sophisticated algorithm that can learn from past market data and apply that learning based on newer market patterns. We believe that the LSTM Prediction Algorithm offers better risk management options and can capture both short-term opportunities and long-term trends, making it more versatile compared to the Buy and Hold strategy.
+
+
+
 ```{r, hide='all'}
 predicted_days = predict_real_days(optimal_params, train_model, normal_data_aapl$data, 
                                    normal_data_aapl, buy_threshold=0.01, sell_threshold=-0.04)
@@ -775,5 +784,6 @@ predicted_days = predict_real_days(optimal_params, train_model, normal_data_aapl
 ```{r}
 print(predicted_days[(nrow(predicted_days) - 5):(nrow(predicted_days) - 1),])
 ```
+
 
 
