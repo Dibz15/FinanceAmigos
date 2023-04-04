@@ -207,7 +207,7 @@ denormalize_data <- function(normalized_data, col_mins, col_ranges) {
 We are using two functions for normalising and denormalising the data. The normalize_data function scales the input data to a range between 0 and 1, while the denormalize_data function reverses this process, restoring the data to its original range. **Normalisation** is a process where the numerical data are often normalised to a range between 0 and 1 as a preprocessing step. The performance of machine learning algorithms can be enhanced by using this method to reduce the effect of variables with varying scales. In contrast, **Denormalisation** involves reversing normalisation by rescaling the data to its original range. We are utilising normalisation as a preprocessing step because we found empirically that performance is drastically improved by normalisation. This is likely because neural networks perform best in the [-1, 1] range due to activations, as well as the fact that normalisation puts all the features in the same absolute range. When certain features are at a much different scale (e.g. RSI vs Closing Price) this can hurt the performance of the NN.
 
 ## Preprocessing using Sliding Windows
-```{r}
+```{r, echo=F}
 preprocess_data <- function(data, lookback_window, horizon) {
   # Normalize the data
   normalized_data <- data
@@ -224,7 +224,7 @@ preprocess_data <- function(data, lookback_window, horizon) {
 }
 ```
 
-In the above code chunk, the preprocess_data function in the provided R code preprocesses the input data for time series prediction by creating input-output pairs for a given lookback window and prediction horizon. In order to store the input data and the desired values, it makes two arrays, x and y. The function iterates through the data, extracting segments using a sliding window of the lookback window size for input and the corresponding target values, based on the prediction horizon. It returns a list containing the input-output pairs (x and y). This allows the NN model to see just the required input data with a ground-truth price for output comparison.
+The `preprocess_data` function in the provided R code preprocesses the input data for time series prediction by creating input-output pairs for a given lookback window and prediction horizon. In order to store the input data and the desired values, it makes two arrays, x and y. The function iterates through the data, extracting segments using a sliding window of the lookback window size for input and the corresponding target values, based on the prediction horizon. It returns a list containing the input-output pairs (x and y). This allows the NN model to see just the required input data with a ground-truth price for output comparison.
 
 
 ## Long Short-Term Memory (LSTM)
@@ -338,7 +338,6 @@ stock_data <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date
 
 prepped_stock_data = prepare_stock_data(stock_data)
 
-plot_stock(prepped_stock_data)
 normal_data_training = normalize_data(prepped_stock_data)
 split_data_training = train_test_split(normal_data_training)
 
@@ -346,6 +345,12 @@ train_data = split_data_training$train
 validation_data = split_data_training$val
 test_data = split_data_training$test
 ```
+
+```{r, fig.align='center', fig.width=6, fig.height=3}
+plot_stock(prepped_stock_data)
+```
+
+
 ### Data Selection 
 
 In the above plot, we have plotted a time series of all of our input features into the model. These are explained in detail in the previous sections. In the plot, it's easy to see how different features are at different scales, which is why the normalisation is necessary. In this example, we have decided to optimise and train our model using data from the closing prices of AMD (Advanced Micro Devices, Inc.) on the NYSE (New York Stock Exchange). The time period selected is from January, 2018 to January, 2023. This is then split into train, validation, and test sets and preprocessed with normalisation.
@@ -684,7 +689,7 @@ normalize_data2 <- function(data_to_normalize, col_mins, col_ranges) {
 }
 ```
 
-Compare both the outputs.
+### Backtesting on AMD
 
 ```{r, results="hide", fig.keep='all', fig.align='center', fig.width=7, fig.height=4}
 symbol <- "AMD"
@@ -698,6 +703,13 @@ normal_data2 = normalize_data2(prepare_stock_data(stock_data_test),
 full_evaluation(optimal_params, train_model, normal_data2, normal_data_training, cash=100000)
 ```
 
+In the above chart, we show a time series of the different tracked values for our backtesting experiment. In this case, we have used our trained LSTM model to  predict the future prices of AMD, and then use that information to make decisions to buy, hold, or sell the stock. In the top plot, the price of the stock is listed using a blue line. Set on top of this line are our signals. Green for buy, red for sell, and purple for hold. The yellow line represents the asset value predicted by the LSTM model, each day at a time. 
+
+In the bottom chart, we show 'Asset Value', which represents the total value of the target asset (in this case, AMD) that is held at that point in the backtest series. 'Cash Value' is the amount of free capital that is available to purchase the asset. 'Portfolio Value' is the total combined value of cash capital and the held asset value. 'Buy and Hold Value' is a series for comparison where the target asset is purchased using the full free capital (in the above case, $100000) and then the asset is held over the entire time period. This is used as a baseline for comparison of our model.
+
+The key points of comparison in the above chart is to look at how the predicted asset value differs from the actual asset value, and also the 'Buy and Hold Value' vs the 'Portfolio Value'. In our example above, our algorithm's trading choice (ending value  ~\$120,000) far outperforms the 'buy and hold' baseline (ending value ~\$80,000). 
+
+### Backtesting on SPY
 
 ```{r, results="hide", fig.keep='all', fig.align='center', fig.width=7, fig.height=4}
 symbol <- "SPY"
@@ -709,12 +721,11 @@ normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
 full_evaluation(optimal_params, train_model, normal_data_aapl$data, 
                 normal_data_aapl, cash=100000, buy_threshold=0.02, sell_threshold=-0.05)
 ```
+Above we plot another experiment with backtesting using data for the S&P 500 Index (in this case, the ticker SPY represents an ETF (exchange-traded fund) that matches the overall index). 
 
-Reasons for why the model is successful and what is it doing.
-
+The characteristics of this curve are fairly different, where we can see there are a lot more 'hold' signals than buy/sell as was the case in the backtest for AMD. However, we still see that the LSTM model combined with our signal selection algorithm still outperforms the 'buy and hold' baseline strategy. This is a bit surprising, because the LSTM was trained and optimised on AMD so we were uncertain if the prediction and signaling strategy would be applicable to other assets. Not shown, we also found that our strategy is successful on other assets on the NYSE such as AAPL, TSLA, MS, and COST. 
 
 ```{r, hide='all', echo=F}
-
 symbol <- "SPY"
 start_date <- as.Date("2021-10-01")
 end_date <- as.Date("2023-04-01")
@@ -743,10 +754,13 @@ for (i in 1:(nrow(normal_data_aapl$data) - 70)) {
 }
 ```
 
+### Sliding Window Portfolio Experiment
+
+In case the particular characteristics of our validation/test period were influencing our results, we setup a test with a moving period of prediction throughout 2022. With an experimental window of 70 days, we find the ending portfolio value and compare it against the buy and hold strategy. The window is shifted forward by 1 day, and the the comparison is again made. Using this, we still find that the LSTM signaling strategy outperforms buy and hold over the majority of test periods for the S&P 500 index. The exact percentage is given below.
+
 ```{r}
 cat("Percentage of windows where LSTM > Buy and Hold: ", (higher_count / total_count) * 100, "%")
 ```
-
 
 ```{r, hide='all', echo=F}
 predict_real_days = function(optimal_params, model, test_data, normal_data, buy_threshold=0.02, sell_threshold=-0.02) {
@@ -798,7 +812,7 @@ predict_real_days = function(optimal_params, model, test_data, normal_data, buy_
   return(shifted_and_dated_data)
 }
 
-symbol <- "TSLA"
+symbol <- "SPY"
 start_date <- as.Date("2022-08-01")
 end_date <- as.Date("2023-04-04")
 stock_data_aapl <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
@@ -811,7 +825,12 @@ normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
 
 Buy and Hold is a passive, long-term investment strategy based on fundamental analysis and has limited risk management options. It doesn't require historical data and doesn't adapt to market changes.  In contrast, the LSTM Prediction Algorithm is a proactive trading strategy that may take advantage of both immediate and past market conditions. It's a sophisticated algorithm that can learn from past market data and apply that learning based on newer market patterns. We believe that the LSTM Prediction Algorithm offers better risk management options and can capture both short-term opportunities and long-term trends, making it more versatile compared to the Buy and Hold strategy.
 
+Looking at our charts of predicted vs. actual, it's clear that the LSTM predictions are smoothed out over a rather long period. This is probably assisted by the relatively long lookback window (24 days) of the optimised LSTM window. Overall, it seems that the LSTM may be performing something similar to EMA with a long period. Further experimentation on this would be interesting.
 
+
+## Inference for Trading Application
+
+Below, we show how the outputs of the predicted profit and recommended signals can be displayed. This signals could then be used by an analyst to invest in the target asset.
 
 ```{r, hide='all'}
 predicted_days = predict_real_days(optimal_params, train_model, normal_data_aapl$data, 
@@ -819,7 +838,7 @@ predicted_days = predict_real_days(optimal_params, train_model, normal_data_aapl
 ```
 
 ```{r}
-print(predicted_days[(nrow(predicted_days) - 5):(nrow(predicted_days) - 1),])
+print(predicted_days[(nrow(predicted_days) - 4):(nrow(predicted_days)),])
 ```
 
 
