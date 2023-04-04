@@ -46,30 +46,30 @@ knitr::include_graphics("./PSO_LSTM_Training.png")
 ```
 The above diagram is an overview of our PSO training process, including the preprocessing steps (explained below), PSO meta-optimisation, and final model training and inference.
 
-## Simple Moving Average (SMA)
+## Technical Indicators as Features
+
+### Simple Moving Average (SMA)
 
 In the world of finance, the **Simple Moving Average (SMA)** is a common tool for examining stock prices and trading volume over time. In the field of AI for Finance, SMA may be used as a component in ML models or as the foundation of an algorithmic trading system. In a nutshell, SMA "moves" along the time series by averaging a predetermined amount of data points inside a predetermined time interval. The goal is to eliminate noise caused by temporary variations so that the true trends become apparent. Simple moving averages (SMAs) are used by traders to track the long-term trend of a stock or other investments without being distracted by short-term fluctuations. This enables investors to evaluate longer-term and medium-term trends side by side. The price of an asset's bullish or bearish trend may be predicted with the use of a SMA. The market is considered to be in an uptrend if the SMA is moving higher, and a downtrend if the SMA is moving downward. Crossing the short-term SMA above the long-term SMA creates a buy signal, while crossing the short-term SMA below the long-term SMA results in a sell signal. **Reference:** <https://www.investopedia.com/terms/s/sma.asp>
 
 
-## Exponential Moving Average (EMA)
+### Exponential Moving Average (EMA)
 
 For analyzing financial time series data, such as stock prices, the **Exponential Moving Average (EMA)** is a popular technical indicator. EMA is a type of moving average that assigns more weight to recent data points, making it more responsive to price changes compared to the Simple Moving Average (SMA). EMA is more suited for spotting variations in trends early on because of the smoothing feature that helps eliminate latency. Technical analysis, trading strategies, and even machine learning models all make use of EMA, demonstrating its versatility in the financial sector. Commonly employed for identifying support and resistance levels or generating buy/sell signals, EMA crossovers are often used to gauge bullish or bearish trends in the market. **Reference:** <https://www.investopedia.com/terms/e/ema.asp>
 
 
-## Relative Strength Index (RSI)
+### Relative Strength Index (RSI)
 
 When applied to financial time-series data like stock prices, the **Relative Strength Index (RSI)** acts as a momentum oscillator. It provides short-term buy and sell signals, identifies market trends, and detects potential trend reversals or price corrections. Values for RSI range from 0 to 100 and reflect the average gains and losses over a certain time frame. RSI calculates average gains and losses over a specific period, with values ranging from 0 to 100. Overbought (above 70) or oversold (below 30) conditions indicate impending price adjustments, while a value of 50 represents a neutral trading level. When the RSI indicates a divergence between price and the oscillator, it may be time to sell or buy. In addition, RSI's center line crossovers and the formation of chart patterns like double tops and bottoms may be used to spot bullish and bearish price fluctuations. Double tops ('M' shaped) imply a downward trend reversal, whereas double bottoms ('W' shaped) indicate an upward price movement. **Reference:** <https://www.investopedia.com/terms/r/rsi.asp>
 
 
-## Moving Average Convergence Divergence (MACD)
+### Moving Average Convergence Divergence (MACD)
 
 For financial time-series data like stock prices, the **Moving Average Convergence Divergence (MACD)** is a trend-following momentum indicator that can assist traders spot reversals in trend direction, momentum, and potential. It is calculated by subtracting the 26-period EMA from the 12-period EMA, resulting in the MACD line. To further aid in the identification of bullish or bearish trends, this line is drawn in conjunction with a 9-period EMA signal line. A bullish signal is given when the MACD line rises above the signal line. This might indicate a good time to purchase. When the MACD line drops below the signal line, however, it's interpreted as a bearish indication and may signify a good time to sell. MACD divergence from price action can signal an imminent trend reversal. For example, the 12-day EMA is \$50, and the 26-day EMA is \$48, resulting in a MACD line value of \$2. The 9-day EMA signal line is \$1.5. Since the MACD line (\$2) is above the signal line (\$1.5), it indicates that the shorter-term (12-day) momentum is stronger than the longer-term (26-day) momentum, suggesting a bullish trend. In this scenario, traders may consider it a potential buying opportunity.. If the MACD line and price action diverge, it may suggest a trend reversal, warranting caution in trading decisions. The MACD is most commonly used with daily periods, where the traditional settings of 12, 26, and 9 days are standard. **Reference:** <https://www.investopedia.com/terms/m/macd.asp>
 
-## Bollinger Bands 
+### Bollinger Bands 
 
-## Bollinger Bands
-
-Bollinger Bands is a popular technical analysis tool used by traders and investors to measure the volatility of an asset and identify potential overbought or oversold conditions. Bollinger Bands consist of three lines: a moving average (typically a simple moving average) and two standard deviation lines plotted above and below the moving average. In AI for Finance, Bollinger Bands can serve as a signal for a variety of machine learning models and algorithmic trading methods.  
+Bollinger Bands is a popular technical analysis tool used by traders and investors to measure the volatility of an asset and identify potential overbought or oversold conditions. Bollinger Bands consist of three lines: a moving average (typically a simple moving average) and two standard deviation lines plotted above and below the moving average. In AI for Finance, Bollinger Bands can serve as a signal for a variety of machine learning models and algorithmic trading methods. 
 
 **Here's a brief explanation of how Bollinger Bands work:**
 
@@ -85,7 +85,9 @@ It's important to note that Bollinger Bands, like any other technical indicator,
 
 **Reference:** <https://www.investopedia.com/terms/b/bollingerbands.asp>
 
+### As Features
 
+The aforementioned technical indicators represent aggregate information about the asset's price movements. Because of this, we have integrated them in our dataset as features from which the neural network could potential learn predictive price patterns.
 
 ```{r, echo=F}
 prepare_stock_data = function(stock_data) {
@@ -651,7 +653,7 @@ plot_backtest = function(dates, backtest_series) {
 ```
 
 ```{r, echo=F}
-full_evaluation = function(optimal_params, model, test_data, normal_data, cash=100000, buy_threshold=0.02, sell_threshold=-0.02) {
+full_evaluation = function(optimal_params, model, test_data, normal_data, cash=100000, buy_threshold=0.02, sell_threshold=-0.02, plotOutput = TRUE) {
   lookback_window = optimal_params[4]
   horizon = 1
   results = evaluate_final_model(optimal_params, model, test_data, horizon)
@@ -659,19 +661,20 @@ full_evaluation = function(optimal_params, model, test_data, normal_data, cash=1
   dates <- as.Date(index(test_data)[(lookback_window + horizon + 1):(nrow(test_data))])
   
   backtest_series = backtest_results(results$predicted, results$actual, normal_data, 
-                   buy_threshold, 
-                   sell_threshold,
-                   initial_cash = cash)
+                       buy_threshold, 
+                       sell_threshold,
+                       initial_cash = cash)
   
-  plot_backtest(dates, backtest_series)
+  if (plotOutput) {
+    plot_backtest(dates, backtest_series)
+  }
+  return(backtest_series)
 }
 ```
-
 
 ```{r, results="hide", echo=F}
 # full_evaluation(optimal_params, train_model, test_data, normal_data_training)
 ```
-
 
 ```{r, echo=F}
 normalize_data2 <- function(data_to_normalize, col_mins, col_ranges) {
@@ -680,7 +683,6 @@ normalize_data2 <- function(data_to_normalize, col_mins, col_ranges) {
   return(normalized_data)
 }
 ```
-
 
 Compare both the outputs.
 
@@ -697,10 +699,9 @@ full_evaluation(optimal_params, train_model, normal_data2, normal_data_training,
 ```
 
 
-
 ```{r, results="hide", fig.keep='all', fig.align='center', fig.width=7, fig.height=4}
-symbol <- "GOOGL"
-start_date <- as.Date("2021-08-01")
+symbol <- "SPY"
+start_date <- as.Date("2021-10-01")
 end_date <- as.Date("2023-04-01")
 stock_data_aapl <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
 
@@ -710,6 +711,42 @@ full_evaluation(optimal_params, train_model, normal_data_aapl$data,
 ```
 
 Reasons for why the model is successful and what is it doing.
+
+
+```{r, hide='all', echo=F}
+
+symbol <- "SPY"
+start_date <- as.Date("2021-10-01")
+end_date <- as.Date("2023-04-01")
+stock_data_aapl <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
+
+normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
+
+higher_count = 0
+total_count = 0
+
+for (i in 1:(nrow(normal_data_aapl$data) - 70)) {
+  short_data = normal_data_aapl$data[i:min(i+70, nrow(normal_data_aapl$data)-1),]
+  backtest_series = full_evaluation(optimal_params, train_model, short_data,
+                    normal_data_aapl, cash=100000, buy_threshold=0.02, sell_threshold=-0.05, plotOutput = FALSE)
+
+  portfolio_values = backtest_series$Portfolio
+  buyAndHoldValues = backtest_series$BuyAndHold
+  
+  final_portfolio = portfolio_values[(length(portfolio_values))-1]
+  final_buyAndHold = buyAndHoldValues[(length(buyAndHoldValues))-1]
+  
+  if (final_portfolio > final_buyAndHold) {
+    higher_count <<- higher_count + 1
+  }
+  total_count <<- total_count + 1
+}
+```
+
+```{r}
+cat("Percentage of windows where LSTM > Buy and Hold: ", (higher_count / total_count) * 100, "%")
+```
+
 
 ```{r, hide='all', echo=F}
 predict_real_days = function(optimal_params, model, test_data, normal_data, buy_threshold=0.02, sell_threshold=-0.02) {
