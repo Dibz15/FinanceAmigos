@@ -391,14 +391,14 @@ backtest_loop = function(predicted_profit_pct,portfolio_value, signals, actual_v
   # Backtesting loop
   for (i in 1:(length(signals) - 1)) {
     cash_value[i] <- cash
-
+    
     if (signals[i] == "Buy" && cash >= actual_value[i]) {
       investment_amount <- cash * predicted_profit_pct[i] # TODO choose and explain
       num_shares_bought <- floor(investment_amount / actual_value[i])
       num_shares <- num_shares + num_shares_bought
       cash <- cash - (num_shares_bought * actual_value[i])
     } else if (signals[i] == "Sell" && num_shares > 0) {
-      sell_amount <- num_shares * actual_value[i] * (-predicted_profit_pct[i])
+      sell_amount <- num_shares * actual_value[i] * predicted_profit_pct[i]
       num_shares_sold <- floor(sell_amount / actual_value[i])
       num_shares <- num_shares - num_shares_sold
       cash <- cash + (num_shares_sold * actual_value[i])
@@ -433,13 +433,20 @@ fitness_of_one_index_one_stock <- function(params,close_p) {
   nSig <- params[3]
   maType <- maTypes(params[4])
   macd <- MACD(close_p, nFast = nFast, nSlow = nSlow, nSig = nSig, maType = maType)
-  signal <- macd$signal
+  signal <- macd[,"signal"]
   
   # removing NA
   signal <- tail(signal,-40)
-  close_p <- tail(close_p,-40)
+  signal <- c(coredata(signal))
   
-  backtest <- backtest_loop(rep(0.1, length(signal)),10000,signal,close_p)
+  close_p <- tail(close_p,-40)
+  close_p <- c(coredata(close_p))
+  
+  trading_signals <- ifelse(signal > 0.1, "Buy",
+                            ifelse(signal < -0.1, "Sell", "Hold"))
+  
+  
+  backtest <- backtest_loop(rep(0.5, length(trading_signals)),100000,signal,close_p)
   return((backtest$Portfolio)[length(signal)])
 }
 
@@ -475,18 +482,16 @@ nSlow <- optimal_params[2]
 nSig <- optimal_params[3]
 maType <- maTypes(optimal_params[4])
 macd <- MACD(close_prices, nFast = nFast, nSlow = nSlow, nSig = nSig, maType = maType)
-signal <- macd$signal
+signal <- macd[,"signal"]
 
 signal <- tail(signal,-40)
-signal <- data.frame(Date = index(signal), coredata(signal))
-colnames(signal) <- c("Date","Signal")
+signal <- c(coredata(signal))
 
 close_prices <- tail(close_prices,-40)
-close_prices <- data.frame(Date = index(close_prices), coredata(close_prices))
-colnames(close_prices) <- c("Date","Close")
+close_prices <- c(coredata(close_prices))
 
 trading_signals <- ifelse(signal > 0.1, "Buy",
                           ifelse(signal < -0.1, "Sell", "Hold"))
 
-backtest <- backtest_loop(rep(0.1, length(signal)),10000,trading_signals,close_prices)
-print(backtest$Portfolio)
+backtest <- backtest_loop(rep(0.5, length(signal)),100000,trading_signals,close_prices)
+
