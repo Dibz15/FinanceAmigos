@@ -59,6 +59,24 @@ When applied to financial time-series data like stock prices, the **Relative Str
 
 For financial time-series data like stock prices, the **Moving Average Convergence Divergence (MACD)** is a trend-following momentum indicator that can assist traders spot reversals in trend direction, momentum, and potential. It is calculated by subtracting the 26-period EMA from the 12-period EMA, resulting in the MACD line. To further aid in the identification of bullish or bearish trends, this line is drawn in conjunction with a 9-period EMA signal line. A bullish signal is given when the MACD line rises above the signal line. This might indicate a good time to purchase. When the MACD line drops below the signal line, however, it's interpreted as a bearish indication and may signify a good time to sell. MACD divergence from price action can signal an imminent trend reversal. For example, the 12-day EMA is $50, and the 26-day EMA is $48, resulting in a MACD line value of $2. The 9-day EMA signal line is $1.5. Since the MACD line ($2) is above the signal line ($1.5), it indicates that the shorter-term (12-day) momentum is stronger than the longer-term (26-day) momentum, suggesting a bullish trend. In this scenario, traders may consider it a potential buying opportunity.. If the MACD line and price action diverge, it may suggest a trend reversal, warranting caution in trading decisions. The MACD is most commonly used with daily periods, where the traditional settings of 12, 26, and 9 days are standard. **Reference:** <https://www.investopedia.com/terms/m/macd.asp>
 
+## Bollinger Bands
+
+Bollinger Bands is a popular technical analysis tool used by traders and investors to measure the volatility of an asset and identify potential overbought or oversold conditions. Bollinger Bands consist of three lines: a moving average (typically a simple moving average) and two standard deviation lines plotted above and below the moving average. In AI for Finance, Bollinger Bands can serve as a signal for a variety of machine learning models and algorithmic trading methods.  
+
+**Here's a brief explanation of how Bollinger Bands work:**
+
+1. Moving Average:  Take the asset's closing prices over a predetermined time frame (say, 20 days) and derive a moving average. This line represents the central trend and serves as a basis for the upper and lower bands.
+
+2. Standard Deviation: This statistic, which measures the asset's volatility, should be computed over the same time frame as the mean and standard deviation. Asset volatility increases as the standard deviation rises. 
+
+3. Upper and Lower Bands: Create the upper and lower bands by adding (for the upper band) and subtracting (for the lower band) a multiple of the standard deviation (usually 2) from the moving average. This creates an enclosing band around the moving average that expands and contracts in relation to the asset's volatility. 
+
+For example, A common Bollinger Bands trading technique is to purchase when the asset's price falls below the lower band (a possible oversold indication) and sell when it rises above the upper band (a possible overbought signal) (a potential overbought signal).  In combination with other technical indicators or features, a machine learning model might utilise these signals to understand the patterns in the data and improve the quality of its forecasts or trade signals. 
+
+It's important to note that Bollinger Bands, like any other technical indicator, should not be used in isolation. Combining Bollinger Bands with other technical indicators, fundamental analysis, or machine learning models can provide a more robust and comprehensive approach to analyzing and trading financial markets.
+
+**Reference:** <https://www.investopedia.com/terms/b/bollingerbands.asp>
+
 
 ```{r}
 prepare_stock_data = function(stock_data) {
@@ -200,7 +218,17 @@ In the above code chunk, the preprocess_data function in the provided R code pre
 
 ## Long Short-Term Memory (LSTM)
 
-**Long Short-Term Memory (LSTM)** networks are a type of recurrent neural network (RNN) architecture designed to address the vanishing gradient problem in RNNs, allowing them to effectively learn long-range dependencies in time series data or sequential information. LSTM networks consist of memory cells and gating mechanisms, which control the flow of information within the network, deciding what information to store, update, or discard. In the context of AI for Finance, LSTMs have been successfully applied to various financial time series prediction tasks, such as stock price forecasting, foreign exchange rate prediction, and market trend analysis.Their ability to model complex, non-linear patterns and capture dependencies over extended periods makes them a powerful tool for financial time series analysis.Investment strategies, risk management, and financial decision-making may all benefit from LSTMs because of the insights and forecasts they can provide from financial data. 
+**Long Short-Term Memory (LSTM)** networks are a type of recurrent neural network (RNN) architecture designed to address the vanishing gradient problem in RNNs, allowing them to effectively learn long-range dependencies in time series data or sequential information. LSTM networks consist of memory cells and gating mechanisms, which control the flow of information within the network, deciding what information to store, update, or discard. In the context of AI for Finance, LSTMs have been successfully applied to various financial time series prediction tasks, such as stock price forecasting, foreign exchange rate prediction, and market trend analysis. Their ability to model complex, non-linear patterns and capture dependencies over extended periods makes them a powerful tool for financial time series analysis.Investment strategies, risk management, and financial decision-making may all benefit from LSTMs because of the insights and forecasts they can provide from financial data. 
+
+**Reference:** 
+
+<https://prvnk10.medium.com/how-lstms-solve-the-problem-of-vanishing-gradients-ea88f08c78ca>
+
+<https://www.datacamp.com/tutorial/lstm-python-stock-market>
+
+Fjellström, C. (2022). Long short-term memory neural network for financial time series. arXiv preprint arXiv:2201.08218 
+<https://arxiv.org/pdf/2201.08218.pdf>
+
 
 ```{r}
 build_lstm_model <- function(input_shape, learning_rate, regularization) {
