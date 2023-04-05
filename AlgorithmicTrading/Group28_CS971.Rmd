@@ -48,6 +48,12 @@ getSymbols("SPY", src = "yahoo", from = "2018-01-01", to = "2021-12-31")
 training_index <- Cl(SPY)
 ```
 
+```{r, warning=F}
+# Plot of the SPY index from 2018 to 2021
+plot(training_index, type = "l", col = "blue", main = "SPY index from 2018 to 2021", xlab = "Date", ylab = "Price")
+```
+
+The above plot shows the closing prices of the SPY index from 2018 to 2021. The SPY index is a market capitalization-weighted index of the 500 largest publicly traded companies in the US. The index is a good choice for our project as it is 1/10 expense ratio of the S&P 500 index and hence, with the initial investment amount of $10000, we can figure out the best trading strategy.
 
 ```{r results="hide", message=F, warning=F}
 # Test data: SPY index from 2022 to 2023 and QQQ index from 2018 to 2021
@@ -56,6 +62,20 @@ test_year <- Cl(SPY) # (Changing the date)
 getSymbols("QQQ", src = "yahoo", from = "2018-01-01", to = "2021-12-31")
 test_index <- Cl(QQQ) # (Changing the index)
 ```
+
+```{r, warning=F}
+# Plot of the SPY index from 2022 to 2023
+plot(test_year, type = "l", col = "blue", main = "SPY index from 2022 to 2023", xlab = "Date", ylab = "Price")
+```
+
+The above plot shows the closing prices of the SPY index from 2022 to 2023 which is the test data. We will use this data to test our trading strategy.
+
+```{r, warning=F}
+# Plot of the QQQ index from 2018 to 2021
+plot(test_index, type = "l", col = "blue", main = "QQQ index from 2018 to 2021", xlab = "Date", ylab = "Price")
+```
+
+The above plot shows the closing prices of the QQQ index from 2018 to 2021. This index is 1/5 expense ratio of the NASDAQ index and hence, with the initial investment amount of $10000, we can test our trading strategy with the same characteristics as the training index. This helps in figuring out how good the trading strategy is in generalizing to other indices.
 
 # Trading strategy (9 marks)
 >> Details of your trading strategy and any specific decisions about the representation, fitness function, model configuration etc. along with details about implementation, any key parameters  etc...
