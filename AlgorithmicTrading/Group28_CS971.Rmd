@@ -176,6 +176,8 @@ colnames(pool_signals) <- c("small", "med", "big", "common")
 
 ### A majority voting signal
 
+In `get_majority_signal` we sum the signals across the 4 columns of the pool. If the sum is greater than or equal to 2, we return 1, if it is less than or equal to -2, we return -1, and if it is between -2 and 2, we return 0. This is because we want to buy when the majority of signals are positive, sell when the majority of signals are negative, and hold when the majority of signals are neutral.
+
 ```{r}
 get_majority_signal <- function(pool) {
     signal_sum <- rowSums(pool)  # sum the pool signals across the 4 columns
@@ -185,6 +187,8 @@ signal_majority <- get_majority_signal(pool_signals)
 ```
 
 ### A grammar-evolutioned signal
+
+In `get_grammar_expr` we use the grammar to create a grammatical evolution algorithm, which will find the best expression among addition, subtraction and multiplication that maximises profit. We then use this expression to create a signal.
 
 ```{r}
 add_t <- function (a,b) { return(((a+b+4)%%3 -1))}
@@ -217,6 +221,7 @@ all_signals <- data.frame(pool_signals, signal_majority, signal_grammar)
 colnames(all_signals) <- c("small", "med", "big", "common","majority", "grammar")
 ```
 
+In `plot_graph_all` we plot all the signals on the same graph. 
 ```{r echo=F}
 plot_graph_all <- function(variable, legend, title, xlab, ylab, bh=FALSE) {
     ggplot(variable, aes(x = as.Date(rownames(variable)))) +
@@ -236,6 +241,10 @@ plot_graph_all <- function(variable, legend, title, xlab, ylab, bh=FALSE) {
 plot_graph_all(cumsum(all_signals), colnames(all_signals), "Cumulative sum of all signals", "Date")
 ```
 
+In `get_investment_values` we use the backtest signal function to get the total value of the investment for each signal. 
+
+In `get_buy_hold` we use the backtest signal function to get the total value of the investment for the buy and hold strategy. 
+
 ```{r echo=F}
 get_investment_values <- function(signal, index) {
     return(backtest_signal(signal, index, 10000)$total_value[-1])
@@ -244,6 +253,8 @@ get_buy_hold <- function(signal,index) {
   return(backtest_signal(signal, index, 10000)$buy_hold[-1])
 }
 ```
+
+The following code creates a dataframe of all the investment values for each signal using the `get_investment_values` function for the training data.
 
 ```{r echo=F}
 pool_values_all <- data.frame(
@@ -274,6 +285,8 @@ test_pool_signals <- data.frame(test_signal_small, test_signal_med, test_signal_
 colnames(test_pool_signals) <- c("small", "med", "big", "common")
 ```
 
+Below, we obtained the majority signal and the grammar signal for the test data (i.e., SPY data from 2022 to 2023). These signals are then combined so that we can plot them all on the same graph and compare.
+
 ```{r}
 test_signal_majority <- get_majority_signal(test_pool_signals)
 test_signal_grammar <- get_grammar_signal(test_pool_signals,grammar_expr)
@@ -284,6 +297,8 @@ colnames(test_all_signals) <- c("small", "med", "big", "common","majority", "gra
 ```{r echo=F, fig.width=6, fig.height=2, fig.align="center"}
 plot_graph_all(cumsum(test_all_signals), colnames(test_all_signals), "Signals", "Date")
 ```
+
+The following code creates a dataframe of all the investment values for each signal using the `get_investment_values` function for the test data (SPY index).
 
 ```{r echo=F}
 pool_values_all_test <- data.frame(
@@ -305,6 +320,8 @@ plot_graph_all(pool_values_all_test, colnames(pool_values_all_test), "All invest
 # Comparison (3 marks)
 >> Comparison against other approaches. The choice of what you compare with is yours. At least try a random solution or the performance of the mean value (if appropriate) and look at the performance obtained
 
+Below, we obtain the signals for the test data (i.e., QQQ data from 2022 to 2023).
+
 ```{r, warning=FALSE}
 qqq_signal_small <- get_signal(parameter_small, test_index)
 qqq_signal_med <- get_signal(parameter_med, test_index)
@@ -313,6 +330,8 @@ qqq_signal_common <- get_signal(parameter_common, test_index)
 qqq_pool_signals <- data.frame(qqq_signal_small, qqq_signal_med, qqq_signal_big, qqq_signal_common)
 colnames(qqq_pool_signals) <- c("small", "med", "big", "common")
 ```
+
+Similar to the previous test, we obtained the majority signal and the grammar signal for the test data. These signals are then combined so that we can plot them all on the same graph and compare.
 
 ```{r}
 qqq_signal_majority <- get_majority_signal(qqq_pool_signals)
@@ -324,6 +343,8 @@ colnames(qqq_all_signals) <- c("small", "med", "big", "common","majority", "gram
 ```{r}
 plot_graph_all(cumsum(qqq_all_signals), colnames(qqq_all_signals), "Signals", "Date")
 ```
+
+The following code creates a dataframe of all the investment values for each signal using the `get_investment_values` function for the test data (QQQ index).
 
 ```{r echo=F}
 qqq_pool_values_all <- data.frame(
