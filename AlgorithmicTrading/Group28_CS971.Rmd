@@ -9,6 +9,10 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Introduction and Background
+
+
+
 ```{r}
 library(quantmod)
 library(hydroPSO)
@@ -107,12 +111,12 @@ get_majority_signal <- function(pool) {
 ```{r}
 plot_graph <- function(variable, yvalue, legend, title, xlab, ylab) {
     ggplot(variable, aes(x = index(variable))) +
-    geom_line(aes(y = yvalue[1], color = as.character(legend[1]))) +
-    geom_line(aes(y = yvalue[2], color = as.character(legend[2]))) +
-    geom_line(aes(y = yvalue[3], color = as.character(legend[3]))) +
-    geom_line(aes(y = yvalue[4], color = as.character(legend[4]))) +
-    labs(title = title, x = xlab, y = ylab) +
-    theme_minimal()
+      geom_line(aes(y = yvalue[,1], color = as.character(legend[1]))) +
+      geom_line(aes(y = yvalue[,2], color = as.character(legend[2]))) +
+      geom_line(aes(y = yvalue[,3], color = as.character(legend[3]))) +
+      geom_line(aes(y = yvalue[,4], color = as.character(legend[4]))) +
+      labs(title = title, x = xlab, y = ylab) +
+      theme_minimal()
 }
 ```
 
@@ -143,7 +147,7 @@ colnames(pool_signals) <- c("signal_small", "signal_med", "signal_big", "signal_
 ```
 
 ```{r}
-plot_graph(cumsum(pool_signals), pool_signals, colnames(pool_signals), "Cumulative sum of signals", "Date", "Cumulative sum of signals")
+plot_graph(cumsum(pool_signals), as.xts(pool_signals), colnames(pool_signals), "Cumulative sum of signals", "Date", "Cumulative sum of signals")
 ```
 
 ```{r}
@@ -203,7 +207,7 @@ all_signals <- data.frame(pool_signals, majority_signal)
 ```
 
 ```{r}
-plot_graph(cumsum(all_signals), all_signals, colnames(all_signals), "Signals", "Date", "Signal")
+plot_graph(cumsum(all_signals), as.xts(all_signals), colnames(all_signals), "Signals", "Date", "Signal")
 ```
 
 ```{r}
