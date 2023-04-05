@@ -312,6 +312,36 @@ plot_graph_all(pool_values_all_test, colnames(pool_values_all_test), "All invest
 # Comparison (3 marks)
 >> Comparison against other approaches. The choice of what you compare with is yours. At least try a random solution or the performance of the mean value (if appropriate) and look at the performance obtained
 
+```{r, warning=FALSE}
+qqq_signal_small <- get_signal(parameter_small, test_index)
+qqq_signal_med <- get_signal(parameter_med, test_index)
+qqq_signal_big <- get_signal(parameter_big, test_index)
+qqq_signal_common <- get_signal(parameter_common, test_index)
+qqq_pool_signals <- data.frame(qqq_signal_small, qqq_signal_med, qqq_signal_big, qqq_signal_common)
+colnames(qqq_pool_signals) <- c("small", "med", "big", "common")
+```
 
+```{r}
+qqq_signal_majority <- get_majority_signal(qqq_pool_signals)
+qqq_signal_grammar <- get_grammar_signal(qqq_pool_signals, grammar_expr)
+qqq_all_signals <- data.frame(qqq_pool_signals, qqq_signal_majority, qqq_signal_grammar)
+colnames(qqq_all_signals) <- c("small", "med", "big", "common","majority", "grammar")
+```
 
+```{r}
+plot_graph_all(cumsum(qqq_all_signals), colnames(qqq_all_signals), "Signals", "Date")
+```
 
+```{r echo=F}
+qqq_pool_values_all <- data.frame(
+    get_investment_values(qqq_signal_small, test_index), get_investment_values(qqq_signal_med, test_index),
+    get_investment_values(qqq_signal_big, test_index), get_investment_values(qqq_signal_common, test_index),
+    get_investment_values(qqq_signal_majority, test_index), get_investment_values(qqq_signal_grammar, test_index)
+)
+colnames(qqq_pool_values_all) <- c("small", "med", "big", "common", "majority", "grammar")
+rownames(qqq_pool_values_all) <- rownames(qqq_all_signals)
+```
+
+```{r}
+plot_graph_all(qqq_pool_values_all, colnames(qqq_pool_values_all), "All investment values", "Date")
+```
