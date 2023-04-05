@@ -27,18 +27,18 @@ set.seed(42)
 # Introduction and background
 Algorithmic trading refers to any form of trading using sophisticated algorithms to automate all or some part of the trade cycle. The use of technical indicators to figure out the best time to buy and sell stocks has been around for a long time. The most popular technical indicators are the simple moving average (SMA), the exponential moving average (EMA), the relative strength index (RSI), the moving average convergence divergence (MACD), and the Bollinger bands. 
 
-The MACD is a trend-following momentum indicator that shows the relationship between two moving averages of a security's price. A standard MACD is calculated by subtracting the 26-day exponential moving average (EMA) from the 12-day EMA. The result of that calculation is the MACD line. A nine-day EMA of the MACD called the "signal line," is then plotted on top of the MACD line, which can function as a trigger for buy and sell signals. Traders may buy the security when the MACD crosses above its signal line and sell ---or short--- the security when the MACD crosses below the signal line. The MACD indicator is used to identify the trend direction as well as the momentum. Our project will use optimization to find the best parameters for the MACD, as well as build other custom indicators to increase profit based on trading signals.
+The MACD is a trend-following momentum indicator that shows the relationship between two moving averages of a security's price. A standard MACD is calculated by subtracting the 26-day exponential moving average (EMA) from the 12-day EMA. The result of that calculation is the MACD line. A 9-day EMA of the MACD called the "signal line," is then plotted on top of the MACD line, which can function as a trigger for buy and sell signals. Traders may buy the security when the MACD crosses above its signal line and sell ---or short--- the security when the MACD crosses below the signal line. The MACD indicator is used to identify the trend direction as well as the momentum. Our project will use optimization to find the best parameters for the MACD, as well as build other custom indicators to increase profit based on trading signals.
 
 The authors in \footnote{\ Lento, C. and Gradojevic, N., 2007. The profitability of technical trading rules: A combined signal approach. Journal of Applied Business Research (JABR), 23(1).} take a combined signal approach to increase profitability by combining the signals from multiple technical indicators. They make use of different trading rules such as the moving average cross-over rule (MAC-O) and trading range break-outs (TRB-O).
-The trading rules are applied on the different stock indices like NASDAQ, DJIA, and TSX300 and a majority voting technique is adopted to find the best trading signal. While the results obtained were statistically significant, the authors stress the need to find better parameters for the technical indicators and an AI-based method to implement the combined signal approach. We are taking this idea of combining signals, first with a majority voting, and secondly by letting a genetic programming algorithm find the best grammar combination. We will be also using stock indices for our profit evaluation, given that they are a global view of the whole market.
+The trading rules are applied on the different stock indices like NASDAQ, DJIA, and TSX300 and a majority voting technique is adopted to find the best trading signal. While the results obtained were statistically significant, the authors stress the need to find better parameters for the technical indicators and an AI-based method to implement the combined signal approach. We are taking this idea of combining signals, first with a majority voting, and secondly by letting a genetic programming algorithm find the best grammar combination. We will be also using stock indices for our profit evaluation, given that they are a global view of the market.
 
 
-In \footnote{\ Hirabayashi, A., Aranha, C. and Iba, H., 2009, July. Optimization of the trading rule in foreign exchange using genetic algorithm. In Proceedings of the 11th Annual conference on Genetic and evolutionary computation (pp. 1529-1536).}, the authors propose to combine the technical indicators RSI and MA and optimize them using genetic algorithms for the foreign exchange market. The focus is on calculating the most appropriate trade timing rather than predicting trading prices; this will also be the focus in our study. For them, their population is formed by technical indicators. The fittest rules are then selected for reproduction, where crossover and mutation operators are applied to create new offspring, and repeated for several generations until the optimal trading rule is found. In their paper, the proposed GA system outperforms a Neural Network in terms of profitability and stability. We will also use a genetic algorithm to combine technical indicators, but it will be based on grammar trees ---combinations of the optimized indicators found previously.
+In \footnote{\ Hirabayashi, A., Aranha, C. and Iba, H., 2009, July. Optimization of the trading rule in foreign exchange using genetic algorithm. In Proceedings of the 11th Annual conference on Genetic and evolutionary computation (pp. 1529-1536).}, the authors propose to combine the technical indicators RSI and MA and optimize them using genetic algorithms for the foreign exchange market. The focus is on calculating the most appropriate trade timing rather than predicting trading prices; this will also be the focus in our study. The fittest rules are selected for reproduction, where crossover and mutation operators are applied to create new offspring, and repeated for several generations until the optimal trading rule is found. In their paper, the proposed GA system outperforms a Neural Network in terms of profitability and stability. We will also use a genetic algorithm to combine technical indicators, but it will be based on grammar trees ---combinations of the optimized indicators found previously.
 
 The different components of algorithmic trading (AT) and the techniques involved are explained in the survey paper \footnote{\ Treleaven, P., Galas, M. and Lalchand, V., 2013. Algorithmic trading review. Communications of the ACM, 56(11), pp.76-85.}. 
-Algorithmic trading involves several steps such as data cleaning, pre-trade analysis, trade signal generation, trade execution, and post-trade handling. In our project, we are focusing solely on the trade signal generation; therefore, we are choosing the remaining system to be simple, such as adopting a risk-neutral strategy. Finally, their paper highlights that the competitive nature of algorithmic trading makes for a secretive community where implementation details are difficult to find. We would therefore like to find more examples in the literature of real-world techniques.
+Algorithmic trading involves several steps such as data cleaning, pre-trade analysis, trade signal generation, trade execution, and post-trade handling. In our project, we are focusing solely on the trade signal generation; therefore, we are choosing the remaining system to be simple, such as the adoption of a risk-neutral strategy. Finally, their paper highlights that the competitive nature of algorithmic trading makes for a secretive community where implementation details are difficult to find. We would therefore like to find more examples in the literature of real-world techniques.
 
-In summary, in this project we are focusing on generating optimal trade signals, and then evaluating them using backtesting. We will be trying to optimize the MACD parameters `nFast`, `nSlow`, and `nSig` using the Particle Swarm Optimization (PSO) algorithm, replacing the usual 12, 26 and 9 values. We are training the algorithm by finding the final profits of an investing period from 2018 to 2021, and using the S&P 500 index. The optimized parameters are then used to generate the trade signal, and backtesting is performed to evaluate the performance of the trading strategy. Backtesting is done on the historical data of the NASDAQ for the same period, as well as for the S&P 500 index for 2022. The results are compared with the results obtained using the default parameters of the MACD indicator. Moreover, we are creating two new signals: one as the majority voting for all individual MACD signals, and another one by running a genetic programming optimization on the combination of these signals.
+In summary, this project focuses on generating optimal trade signals, and then evaluating them with backtesting. We will be trying to optimize the MACD parameters `nFast`, `nSlow`, and `nSig` using the Particle Swarm Optimization (PSO) algorithm, replacing the usual 12, 26 and 9 values. We are training the algorithm by finding the final profits of an investing period from 2018 to 2021, using the S&P 500 stock index. The optimized parameters are then used to generate the trade signal, and backtesting is performed to evaluate the performance of the trading strategy. Backtesting is done on the historical data of the NASDAQ for the same period, as well as for the S&P 500 index for 2022. The results are compared with the results obtained using the default parameters of the MACD indicator. Moreover, we are creating two new signals: one as the majority voting for all individual MACD signals, and another one by running a genetic programming optimization on the combination of these signals.
 
 
 # Overview of data
@@ -51,12 +51,13 @@ getSymbols("SPY", src = "yahoo", from = "2018-01-01", to = "2021-12-31")
 training_index <- Cl(SPY)
 ```
 
-```{r, echo=F, fig.width=6, fig.height=2, fig.align="center", message=F, warning=F}
+```{r, echo=F, fig.width=6, fig.height=1.75, fig.align="center", message=F, warning=F}
 # Plot of the SPY index from 2018 to 2021
+par(mar=c(1,1,1,1))
 plot(training_index, type = "l", col = "blue", main = "SPY index from 2018 to 2021"
      , xlab = "Date", ylab = "Price")
 ```
-The above plot shows the closing prices of the SPY index from 2018 to 2021. This will be our training data. For our testing data, we will follow two parallel approaches: changing the dates (`test_year`), and changing the index (`test_index`).
+The above plot shows the closing prices of the SPY index from 2018 to 2021. This will be our training data. We can see that it has a big decrease during the pandemic, and a steady increase afterwards. For our testing data, we will follow two parallel approaches: changing the dates (`test_year`), and changing the index (`test_index`).
 
 ```{r results="hide", message=F, warning=F}
 # Test data: SPY index from 2022 to 2023 and QQQ index from 2018 to 2021
@@ -66,15 +67,17 @@ getSymbols("QQQ", src = "yahoo", from = "2018-01-01", to = "2021-12-31")
 test_index <- Cl(QQQ) # (Changing the index)
 ```
 
-```{r, echo=F, fig.width=6, fig.height=2, fig.align="center", message=F, warning=F}
+```{r, echo=F, fig.width=6, fig.height=1.75, fig.align="center", message=F, warning=F}
 # Plot of the SPY index from 2022 to 2023
+par(mar=c(1,1,1,1))
 plot(test_year, type = "l", col = "blue", main = "SPY index from 2022 to 2023", xlab = "Date", ylab = "Price")
 ```
 
-The above plot shows the closing prices of the SPY index from 2022 to 2023, which is the first test data.
+The above plot shows the closing prices of the SPY index from 2022 to 2023, which is the first test data. It has a deep decrease for the whole period.
 
-```{r, echo=F, fig.width=6, fig.height=2, fig.align="center", message=F, warning=F}
+```{r, echo=F, fig.width=6, fig.height=1.75, fig.align="center", message=F, warning=F}
 # Plot of the QQQ index from 2018 to 2021
+par(mar=c(1,1,1,1))
 plot(test_index, type = "l", col = "blue", main = "QQQ index from 2018 to 2021", xlab = "Date", ylab = "Price")
 ```
 
@@ -128,7 +131,7 @@ backtest_signal <- function(trading_signal, prices, initial_capital = 10000) {
 }
 ```
 
-In `get_profit` we obtain the difference between the initial capital and the total value on the last day.
+In `get_profit` we obtain the difference between the initial capital and the total value on the last day. The downside to this naive approach is that it is very dependent on the time period we specified. It could be perhaps interesting to check how well it integrates into a model that predicts the next day's price as its fitness value.
 
 ```{r}
 get_profit <- function(trading_signal, index) {
@@ -137,9 +140,7 @@ get_profit <- function(trading_signal, index) {
 }
 ```
 
-Now that we have a way of comparing signals, we will use the PSO algorithm to find the best combination of parameters that yield the best profits for its signals. The fitness function of a set of parameters will be the (negated) profit of its signal, as the algorithm finds minimum points and we want maximum profit.
-
-Here we train our PSO algorithm, which comes from the `hydroPSO` library. We give it the lower and upper bounds of every set of parameters and the training prices.
+Now that we have a way of comparing signals, we will use the PSO algorithm to find the best combination of parameters that yield the best profits for its signals. The fitness function of a set of parameters will be the (negated) profit of its signal, as the algorithm finds minimum points and we want maximum profit. Here we train our PSO algorithm, which comes from the `hydroPSO` library. We give it the lower and upper bounds of every set of parameters and the training prices.
 
 ```{r}
 get_optimal_parameter <- function(lower_bounds, upper_bounds, index) {
@@ -164,7 +165,6 @@ colnames(param_dataframe) <- c('Fast','Slow','Signal')
 print(param_dataframe)
 ```
 
-## Getting combined signals
 ```{r warning=F}
 signal_small <- get_signal(parameter_small, training_index)
 signal_med <- get_signal(parameter_med, training_index)
@@ -173,6 +173,10 @@ signal_common <- get_signal(parameter_common, training_index)
 pool_signals <- data.frame(signal_small, signal_med, signal_big, signal_common)
 colnames(pool_signals) <- c("small", "med", "big", "common")
 ```
+
+## Getting combined signals
+
+We will be creating two methods of obtaining new signals: one, to make the signals vote for the result; two, to create an optimized grammar expression with them. The second approach should behave better than the first, as it contains it.
 
 ### A majority voting signal
 
@@ -188,14 +192,10 @@ signal_majority <- get_majority_signal(pool_signals)
 
 ### A grammar-evolutioned signal
 
-In `get_grammar_expr` we use the grammar to create a grammatical evolution algorithm, which will find the best expression among addition, subtraction and multiplication that maximises profit. We then use this expression to create a signal.
+In `get_grammar_expr` we create a grammar that evaluates to a combination of our basic signals. We feed it into a grammatical evolution algorithm from the `gramEvol` library, which will find the best expression among (mod)addition, (mod)subtraction and multiplication that maximizes profit. We then use this expression `grammar_expr` to create a new signal in `get_grammar_signal`.
 
 ```{r}
-add_t <- function (a,b) { return(((a+b+4)%%3 -1))}
-sub_t <- function (a,b) { return(((a-b+4)%%3 -1))}
-```
-
-```{r}
+add_t <- function (a,b) ((a+b+4)%%3 -1); sub_t <- function (a,b) ((a-b+4)%%3 -1)
 get_grammar_expr <- function(signals) {
   rules <- list(expr = grule(op(expr, expr),var,-(expr)), op = grule(add_t,sub_t,'*'),
               var = grule(signals$small, signals$med, signals$big, signals$common))
@@ -213,15 +213,18 @@ signal_grammar <- get_grammar_signal(pool_signals,grammar_expr)
 grammar_expr
 ```
 
-# Performance on training (3 marks)
->> Presentation of, and comments on, the performance achieved: Calculation of profit, and fitness values achieved on training data.
+# Performance on training
 
 ```{r echo=F}
 all_signals <- data.frame(pool_signals, signal_majority, signal_grammar)
 colnames(all_signals) <- c("small", "med", "big", "common","majority", "grammar")
 ```
+This is the profit obtained for all signals considered until now, calculated with `get_profit` for `training_index`.
+``` {r echo=F} 
+all_profits <- sapply(all_signals,function(s) get_profit(s,training_index))
+all_profits
+```
 
-In `plot_graph_all` we plot all the signals on the same graph. 
 ```{r echo=F}
 plot_graph_all <- function(variable, legend, title, xlab, ylab, bh=FALSE) {
     ggplot(variable, aes(x = as.Date(rownames(variable)))) +
@@ -237,24 +240,25 @@ plot_graph_all <- function(variable, legend, title, xlab, ylab, bh=FALSE) {
 }
 ```
 
-```{r echo=F, fig.width=6, fig.height=2, fig.align="center"}
-plot_graph_all(cumsum(all_signals), colnames(all_signals), "Cumulative sum of all signals", "Date")
-```
-
-In `get_investment_values` we use the backtest signal function to get the total value of the investment for each signal. 
-
-In `get_buy_hold` we use the backtest signal function to get the total value of the investment for the buy and hold strategy. 
-
 ```{r echo=F}
 get_investment_values <- function(signal, index) {
     return(backtest_signal(signal, index, 10000)$total_value[-1])
+}
+get_number_shares <- function(signal, index) {
+    return(backtest_signal(signal, index, 10000)$number_of_shares[-1])
 }
 get_buy_hold <- function(signal,index) {
   return(backtest_signal(signal, index, 10000)$buy_hold[-1])
 }
 ```
+We can see how these signals produce different number of shares when investing during the train period, which is calculated from `backtest_signal`'s output dataframe.
 
-The following code creates a dataframe of all the investment values for each signal using the `get_investment_values` function for the training data.
+```{r echo=F, fig.width=6, fig.height=1.5, fig.align="center"}
+num_shares <- data.frame(lapply(all_signals, function(s) get_number_shares(s,training_index)))
+rownames(num_shares) <- rownames(all_signals)
+plot_graph_all(num_shares, colnames(all_signals), "Number of shares for each signal", "Date")
+```
+
 
 ```{r echo=F}
 pool_values_all <- data.frame(
@@ -267,38 +271,40 @@ colnames(pool_values_all) <- c("small", "med", "big", "common","majority","gramm
 rownames(pool_values_all) <- rownames(all_signals)
 ```
 
+Below we can see our total value achieved via each of the strategies, again calculated from `backtest_signal`, as well as a naive strategy which consists of buying all stocks at the beginning and holding afterwards. As the train period had a steep increase of prices at the end, the buy-and-hold approach is very successful then, as well as our `grammar` range signal. The `common` signal is doing the worst, as it seems to be the most cautious, although it is interesting to see that `majority` too. Finally, it is worth noting that `big` does very well during the steep decrease.
 ```{r echo=F, fig.width=6, fig.height=2, fig.align="center"}
 plot_graph_all(pool_values_all, colnames(pool_values_all), "All investment values", "Date",bh=TRUE)
 ```
 
-# Performance on test (4 marks)
->> The performance of, and comments on, the model and backtesting strategy. How does this perform over unseen data (and why) and what level of profit would it yield?
-
+# Performance on test
 ## Backtest on future dates
 
-```{r}
+We now obtain the same evaluation but for the `test_year` index (i.e., SPY from 2022 to 2023). We get all signals with `get_signal`, `get_majority_signal` and `get_grammar_signal`. This is the profit for all of them in this period. We can see that it is a period of decline.
+
+```{r echo=F, warning=FALSE}
 test_signal_small <- get_signal(parameter_small, test_year)
 test_signal_med <- get_signal(parameter_med, test_year)
 test_signal_big <- get_signal(parameter_big, test_year)
 test_signal_common <- get_signal(parameter_common, test_year)
-test_pool_signals <- data.frame(test_signal_small, test_signal_med, test_signal_big, test_signal_common)
+test_pool_signals <- data.frame(test_signal_small,test_signal_med,test_signal_big,test_signal_common)
 colnames(test_pool_signals) <- c("small", "med", "big", "common")
-```
-
-Below, we obtained the majority signal and the grammar signal for the test data (i.e., SPY data from 2022 to 2023). These signals are then combined so that we can plot them all on the same graph and compare.
-
-```{r}
 test_signal_majority <- get_majority_signal(test_pool_signals)
 test_signal_grammar <- get_grammar_signal(test_pool_signals,grammar_expr)
 test_all_signals <- data.frame(test_pool_signals, test_signal_majority, test_signal_grammar)
 colnames(test_all_signals) <- c("small", "med", "big", "common","majority", "grammar")
 ```
-
-```{r echo=F, fig.width=6, fig.height=2, fig.align="center"}
-plot_graph_all(cumsum(test_all_signals), colnames(test_all_signals), "Signals", "Date")
+``` {r echo=F} 
+test_all_profits <- sapply(test_all_signals,function(s) get_profit(s,test_year))
+test_all_profits
 ```
 
-The following code creates a dataframe of all the investment values for each signal using the `get_investment_values` function for the test data (SPY index).
+
+```{r echo=F, fig.width=6, fig.height=1.5, fig.align="center"}
+num_shares_test <- data.frame(lapply(test_all_signals, function(s) get_number_shares(s,test_year)))
+rownames(num_shares_test) <- rownames(test_all_signals)
+plot_graph_all(num_shares_test, colnames(test_all_signals), "Number of shares for each signal", "Date")
+```
+
 
 ```{r echo=F}
 pool_values_all_test <- data.frame(
@@ -310,41 +316,39 @@ pool_values_all_test <- data.frame(
 colnames(pool_values_all_test) <- c("small", "med", "big", "common","majority","grammar","buy_hold")
 rownames(pool_values_all_test) <- rownames(test_all_signals)
 ```
-
+In the plot we see how the total value progresses. The `grammar` signal is the best one to hold up against the decrease, while it is normal for the buy-and-hold to perform very badly. It is interesting to see that the `common` signal also performs well, but `majority` does not improve on the rest.
 ```{r echo=F, fig.width=6, fig.height=2, fig.align="center"}
 plot_graph_all(pool_values_all_test, colnames(pool_values_all_test), "All investment values", "Date",bh=TRUE)
 ```
 
 ## Test on another stock index
 
-# Comparison (3 marks)
->> Comparison against other approaches. The choice of what you compare with is yours. At least try a random solution or the performance of the mean value (if appropriate) and look at the performance obtained
+Similar to the previous test, we obtain the evaluation for the `test_index` index (i.e., QQQ data from 2022 to 2023). We get all
+signals with get_signal, get_majority_signal and get_grammar_signal again, combined so that we can plot them all and get their profits, seen below.
 
-Below, we obtain the signals for the test data (i.e., QQQ data from 2022 to 2023).
-
-```{r, warning=FALSE}
+```{r, warning=FALSE, echo=F}
 qqq_signal_small <- get_signal(parameter_small, test_index)
 qqq_signal_med <- get_signal(parameter_med, test_index)
 qqq_signal_big <- get_signal(parameter_big, test_index)
 qqq_signal_common <- get_signal(parameter_common, test_index)
 qqq_pool_signals <- data.frame(qqq_signal_small, qqq_signal_med, qqq_signal_big, qqq_signal_common)
 colnames(qqq_pool_signals) <- c("small", "med", "big", "common")
-```
-
-Similar to the previous test, we obtained the majority signal and the grammar signal for the test data. These signals are then combined so that we can plot them all on the same graph and compare.
-
-```{r}
 qqq_signal_majority <- get_majority_signal(qqq_pool_signals)
 qqq_signal_grammar <- get_grammar_signal(qqq_pool_signals, grammar_expr)
 qqq_all_signals <- data.frame(qqq_pool_signals, qqq_signal_majority, qqq_signal_grammar)
 colnames(qqq_all_signals) <- c("small", "med", "big", "common","majority", "grammar")
 ```
 
-```{r}
-plot_graph_all(cumsum(qqq_all_signals), colnames(qqq_all_signals), "Signals", "Date")
+``` {r echo=F} 
+qqq_all_profits <- sapply(qqq_all_signals,function(s) get_profit(s,test_index))
+qqq_all_profits
 ```
 
-The following code creates a dataframe of all the investment values for each signal using the `get_investment_values` function for the test data (QQQ index).
+```{r echo=F, fig.width=6, fig.height=1.5, fig.align="center"}
+num_shares_qqq <- data.frame(lapply(qqq_all_signals, function(s) get_number_shares(s,test_index)))
+rownames(num_shares_qqq) <- rownames(qqq_all_signals)
+plot_graph_all(num_shares_qqq, colnames(qqq_all_signals), "Number of shares for each signal", "Date")
+```
 
 ```{r echo=F}
 qqq_pool_values_all <- data.frame(
@@ -357,6 +361,13 @@ colnames(qqq_pool_values_all) <- c("small", "med", "big", "common", "majority", 
 rownames(qqq_pool_values_all) <- rownames(qqq_all_signals)
 ```
 
-```{r}
+Above we calculate the number of shares during the period, and below we plot all investment values again. Following the market increase at the end, the buy-and-hold approach is very profitable, as we know. We also note that the `grammar` signal is also quite successful; having success in both test sets, we can conclude with a positive result from this method. While `big` is too conservative, the rest do not vary much.
+
+```{r echo=F, fig.width=6, fig.height=2, fig.align="center"}
 plot_graph_all(qqq_pool_values_all, colnames(qqq_pool_values_all), "All investment values", "Date",bh=TRUE)
 ```
+
+# Comparison (3 marks)
+>> Comparison against other approaches. The choice of what you compare with is yours. At least try a random solution or the performance of the mean value (if appropriate) and look at the performance obtained
+
+signals_data = read.csv("predicted_days.csv", row.names = 1)
