@@ -1,49 +1,96 @@
 ---
 title: "Group28_CS971"
 author: "celia rubio madrigal, girish koushik"
-date: "`r Sys.Date()`"
+date: ""
 output: pdf_document
+header-includes:
+  - \date{}
+fontfamily: lato
+fontfamilyoptions: 
+- default
+- defaultsans
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
-
-# Introduction and Background
-
-
-
-```{r}
 library(quantmod)
 library(hydroPSO)
 library(ggplot2)
 library(gramEvol)
+set.seed(42)
 ```
+
+# Introduction and background (4 marks)
+>> Background to the problem - a short review of the approach you are going to employ and a brief overview of related work in the area drawn from either published papers or blog postings
+
+Algorithmic trading refers to any form of trading using sophisticated algorithms to automate all or some part of the trade cycle. The use of technical indicators to figure out the best time to buy and sell stocks has been around for a long time. The most popular technical indicators are the simple moving average (SMA), the exponential moving average (EMA), the relative strength index (RSI), the moving average convergence divergence (MACD), and the Bollinger bands. The MACD is a trend-following momentum indicator that shows the relationship between two moving averages of a security's price. A standard MACD is calculated by subtracting the 26-day exponential moving average (EMA) from the 12-day EMA. The result of that calculation is the MACD line. A nine-day EMA of the MACD called the "signal line," is then plotted on top of the MACD line, which can function as a trigger for buy and sell signals. Traders may buy the security when the MACD crosses above its signal line and sell—or short—the security when the MACD crosses below the signal line. The MACD indicator is used to identify the trend direction as well as the momentum.
+
+
+The authors in [1] take a combined signal approach to increase profitability by combining the signals from multiple technical indicators. They make use of different trading rules such as the moving average cross-over rule (MAC-O) and trading range break-outs (TRB-O). While the MAC-O rule compares a short-run moving average to a long-run moving average, the TRB-O rule generates a buy signal when the prices cross above the local maximum and a sell signal when the prices cross below the local minimum. The trading rules are applied on the different stock indices like NASDAQ, DJIA, and TSX300 and a majority voting technique is adopted to find the best trading signal. While the results obtained were statistically significant, the authors stress the need to find better parameters for the technical indicators and an AI-based method to implement the combined signal approach.
+
+
+In [2], the authors propose to combine the technical indicators RSI and MA and optimise them using the genetic algorithms (GA) to find the best trading signal for the foreign exchange market. The focus is on calculating the most appropriate trade timing, rather than predicting trading prices. The study uses machine learning to obtain objective results by utilizing information from past market trends. Trading rules are optimized using genetic algorithms by generating a population of trading rules based on technical indexes. The fitness of each rule is evaluated based on its profitability and stability. The fittest rules are then selected for reproduction, where crossover and mutation operators are applied to create new offspring. This process is repeated for several generations until the optimal trading rule is found. The results are compared with a method that uses a Neural Network and the paper concludes that the proposed GA system outperforms the Neural Network method in terms of profitability and stability.
+
+
+The different components of algorithmic trading (AT) and the techniques involved are explained in the survey paper [3]. The article discusses two principal approaches to risk management: limiting the amount of risk and limiting the type of risk. The former involves managing exposure through limiting by penalty or constraint, such as leverage, while the latter involves eliminating whole types of exposure. Algorithmic trading involves several steps such as data cleaning, pre-trade analysis, trade signal generation, trade execution, and post-trade handling. Finally, it highlights that the competitive nature of algorithmic trading makes for a secretive community where implementation details are difficult to find. In this project, we are focussing on generating the trade signal and then evaluating them using the backtesting technique for test data.
+
+
+Add footnotes for this text citing the references.
+
+
+# Overview of data (2 marks)
+>> An overview of the of data you chose to work with (as usual, summary plots would be welcome). Working with one data set is fine but if you want to extend that to consider several assets then that is okay too
+
+
+```{r results="hide", message=F, warning=F}
+# Training data: SPY index from 2018 to 2021
+getSymbols("SPY", src = "yahoo", from = "2018-01-01", to = "2021-12-31")
+training_index <- Cl(SPY)
+```
+
+
+```{r results="hide", message=F, warning=F}
+# Test data: SPY index from 2022 to 2023 and QQQ index from 2018 to 2021
+getSymbols("SPY", src = "yahoo", from = "2022-01-01", to = "2023-01-01")
+test_year <- Cl(SPY) # (Changing the date)
+getSymbols("QQQ", src = "yahoo", from = "2018-01-01", to = "2021-12-31")
+test_index <- Cl(QQQ) # (Changing the index)
+```
+
+# Trading strategy (9 marks)
+>> Details of your trading strategy and any specific decisions about the representation, fitness function, model configuration etc. along with details about implementation, any key parameters  etc...
+
+## Optimising MACD parameters with PSO
+
+First, we will choose the best parameters for the MACD indicator. We will need a function that, given a set of parameters and some closing prices, will give the signal to buy, sell or hold for the following day. This is automatically calculated by `TTR`'s `MACD` function, which we wrap into `get_signal` and set to hold the first days of the sliding window.
+
+```{r}
+get_signal <- function(params, index) {
+    fast = as.integer(params[1]); slow = as.integer(params[2]); signal = as.integer(params[3])
+    macd <- MACD(index, nFast = fast, nSlow = slow, nSig = signal, maType = "EMA")
+    signal <- ifelse(macd$macd-macd$signal>0.1, 1, ifelse(macd$macd-macd$signal< -0.1, -1, 0))
+    signal[is.na(signal)] <- 0
+    return(signal)
+}
+```
+
+To know which signal is best we need a way to calculate its generated profit. We are first following a naive approach where we buy or sell a single stock at each signal call, starting with an initial capital of 10000. In `backtest_signal` we return a dataframe with vectors that store our cash value, asset value, the number of shares and total value per day.
 
 ```{r}
 backtest_signal <- function(trading_signal, prices, initial_capital = 10000) {
     cash_value <- rep(NA, length(trading_signal) + 1)
     asset_value <- rep(NA, length(trading_signal) + 1)
     number_of_shares <- rep(NA, length(trading_signal) + 1)
-
-    trading_signal <- as.vector(trading_signal)
-    prices <- as.vector(prices)
-
-    cash_value[1] <- initial_capital
-    asset_value[1] <- 0
-    number_of_shares[1] <- 0
-
+    trading_signal <- as.vector(trading_signal); prices <- as.vector(prices)
+    cash_value[1] <- initial_capital; asset_value[1] <- 0; number_of_shares[1] <- 0
     for (i in 1:(length(trading_signal))) {
-        if (trading_signal[i] == 1 && cash_value[i] >= prices[i]) {
-            # buy
+        if (trading_signal[i] == 1 && cash_value[i] >= prices[i]) { # buy
             number_of_shares[i + 1] <- number_of_shares[i] + 1
             cash_value[i + 1] <- cash_value[i] - prices[i]
-        } else if (trading_signal[i] == -1 && number_of_shares[i] > 0) {
-            # sell
+        } else if (trading_signal[i] == -1 && number_of_shares[i] > 0) { # sell
             number_of_shares[i + 1] <- number_of_shares[i] - 1
             cash_value[i + 1] <- cash_value[i] + prices[i]
-        } else {
-            # hold
+        } else { # hold
             number_of_shares[i + 1] <- number_of_shares[i]
             cash_value[i + 1] <- cash_value[i]
         }
@@ -56,202 +103,165 @@ backtest_signal <- function(trading_signal, prices, initial_capital = 10000) {
 }
 ```
 
-
-```{r}
-get_signal <- function(params, index) {
-    fast = as.integer(params[1])
-    slow = as.integer(params[2])
-    signal = as.integer(params[3])
-
-    macd <- MACD(index, nFast = fast, nSlow = slow, nSig = signal, maType = "EMA")
-
-    trading_signal <- ifelse(macd$macd - macd$signal > 0.1, 1, ifelse(macd$macd - macd$signal < -0.1, -1, 0))
-    trading_signal[is.na(trading_signal)] <- 0
-
-    return(trading_signal)
-}
-```
+In `get_profit` we obtain the difference between the initial capital and the total value on the last day.
 
 ```{r}
 get_profit <- function(trading_signal, index) {
-    initial_capital <- 10000
-    backtest <- backtest_signal(trading_signal, index, initial_capital)
-    profit <- backtest$total_value[length(backtest$total_value)] - backtest$total_value[1]
-    return(profit)
+    backtest <- backtest_signal(trading_signal, index, 10000)
+    return(backtest$total_value[length(backtest$total_value)] - backtest$total_value[1])
 }
 ```
 
-```{r}
-fitness_function <- function(params, index) {
-    trading_signal <- get_signal(params, index)
-    return(-get_profit(trading_signal, index))
-}
-```
+Now that we have a way of comparing signals, we will use the PSO algorithm to find the best combination of parameters that yield the best profits for its signals. The fitness function of a set of parameters will be the (negated) profit of its signal, as the algorithm finds minimum points and we want maximum profit.
+
+Here we train our PSO algorithm, which comes from the `hydroPSO` library. We give it the lower and upper bounds of every set of parameters and the training prices.
 
 ```{r}
 get_optimal_parameter <- function(lower_bounds, upper_bounds, index) {
-    this_fitness <- function(params) {
-        return(fitness_function(params, index))
-    }
-    opt_results <- hydroPSO(fn = this_fitness, lower = lower_bounds, upper = upper_bounds, control = list(c1 = 2, c2 = 2, maxit = 100))
-    optimal_params <- as.integer(opt_results$par)
-    return(optimal_params)
+    fitness <- function(params) { return(-get_profit(get_signal(params, index), index)) }
+    opt_results <- hydroPSO(fn = fitness, lower = lower_bounds, upper = upper_bounds, 
+                            control = list(c1 = 2, c2 = 2, maxit = 1)) # TODO CHANGE BACK TO 100
+    return(as.integer(opt_results$par))
 }
 ```
 
-```{r}
-get_majority_signal <- function(pool) {
-    # sum the pool signals across the 4 columns
-    signal_sum <- rowSums(pool)
-    new_signal <- ifelse(signal_sum >= 2, 1, ifelse(signal_sum <= -2, -1, 0))
-    return(new_signal)
-}
-```
+We will find 3 sets of optimal parameters for different sizes of ranges; we will call them `small`, `med` and `big`. We will also consider the common set of parameters for MACD (12, 26, 9) and call it `common`. Note that this process is easily generalisable to other types of indicators such as RSI. 
 
-```{r}
-plot_graph <- function(variable, yvalue, legend, title, xlab, ylab) {
-    ggplot(variable, aes(x = index(variable))) +
-      geom_line(aes(y = yvalue[,1], color = as.character(legend[1]))) +
-      geom_line(aes(y = yvalue[,2], color = as.character(legend[2]))) +
-      geom_line(aes(y = yvalue[,3], color = as.character(legend[3]))) +
-      geom_line(aes(y = yvalue[,4], color = as.character(legend[4]))) +
-      labs(title = title, x = xlab, y = ylab) +
-      theme_minimal()
-}
-```
-
-```{r}
-# Training data: SPY index from 2018 to 2021
-getSymbols("SPY", src = "yahoo", from = "2018-01-01", to = "2021-12-31")
-training_index <- Cl(SPY)
-```
-
-```{r}
-set.seed(42)
+```{r results="hide", message=F, warning=F}
 parameter_small <- get_optimal_parameter(c(1,5,5),c(5,20,50),training_index)
 parameter_med <- get_optimal_parameter(c(1,15,5),c(15,50,50),training_index)
 parameter_big <- get_optimal_parameter(c(1,50,5),c(50,200,50),training_index)
 parameter_common <- c(12, 26, 9)
 ```
+``` {r echo=F}
+param_dataframe <- rbind(parameter_small,parameter_med,parameter_big,parameter_common)
+colnames(param_dataframe) <- c('Fast','Slow','Signal')
+print(param_dataframe)
+```
 
-```{r}
+## Getting combined signals
+```{r warning=F}
 signal_small <- get_signal(parameter_small, training_index)
 signal_med <- get_signal(parameter_med, training_index)
 signal_big <- get_signal(parameter_big, training_index)
 signal_common <- get_signal(parameter_common, training_index)
-```
-
-```{r}
 pool_signals <- data.frame(signal_small, signal_med, signal_big, signal_common)
-colnames(pool_signals) <- c("signal_small", "signal_med", "signal_big", "signal_common")
+colnames(pool_signals) <- c("small", "med", "big", "common")
 ```
 
-```{r}
-plot_graph(cumsum(pool_signals), as.xts(pool_signals), colnames(pool_signals), "Cumulative sum of signals", "Date", "Cumulative sum of signals")
-```
+### A majority voting signal
 
 ```{r}
-get_investment_values <- function(parameter, index) {
-    signal <- get_signal(parameter, index)
-    backtest <- backtest_signal(signal, index, 10000)
-    return(backtest$total_value)
+get_majority_signal <- function(pool) {
+    signal_sum <- rowSums(pool)  # sum the pool signals across the 4 columns
+    return(ifelse(signal_sum >= 2, 1, ifelse(signal_sum <= -2, -1, 0)))
 }
+signal_majority <- get_majority_signal(pool_signals)
 ```
 
-```{r}
-pool_values <- data.frame(
-  get_investment_values(parameter_small, training_index), get_investment_values(parameter_med, training_index),
-  get_investment_values(parameter_big, training_index), get_investment_values(parameter_common, training_index)
-)
-colnames(pool_values) <- c("value_small", "value_med", "value_big", "value_common")
-```
+### A grammar-evolutioned signal
 
 ```{r}
-plot_graph(pool_values, pool_values, colnames(pool_values), "Investment values", "Date", "Investment value")
-```
-
-```{r}
-# Expects small, med, big, common
 get_grammar_expr <- function(signals) {
-  # Define our grammar
-  rules <- list(expr = grule(op(expr, expr),var),
-              op = grule('+', '-', '*'),
+  rules <- list(expr = grule(op(expr, expr),var), op = grule('+', '-', '*'),
               var = grule(signals$small, signals$med, signals$big, signals$common))
-
-  # Create grammar from rules
   grammar <- CreateGrammar(rules)
-
-  grammar_fitness <- function(expr) {
-    signal <- eval(expr)
-    return(-get_profit(signal,training_index))
-  }
-
-  ge <- GrammaticalEvolution(grammar, grammar_fitness, iterations = 500, max.depth = 5)
-  expr <- ge$best$expressions
-  return(expr)
+  grammar_fitness <- function(expr) { return(-get_profit(eval(expr),training_index)) }
+  ge <- GrammaticalEvolution(grammar, grammar_fitness, iterations = 1, max.depth = 5)
+  return(ge$best$expressions)
 }
+get_grammar_signal <- function(signals,expr) { return(eval(expr)) }
+```
 
-get_grammar_signal <- function(signals,expr) {
-  return(eval(expr))
+```{r warning=F}
+grammar_expr <- get_grammar_expr(pool_signals)
+signal_grammar <- get_grammar_signal(pool_signals,grammar_expr)
+```
+
+# Performance on training (3 marks)
+>> Presentation of, and comments on, the performance achieved: Calculation of profit, and fitness values achieved on training data.
+
+```{r}
+all_signals <- data.frame(pool_signals, signal_majority, signal_grammar)
+colnames(all_signals) <- c("small", "med", "big", "common","majority", "grammar")
+```
+
+```{r echo=F}
+plot_graph_all <- function(variable, legend, title, xlab, ylab) {
+    ggplot(variable, aes(x = as.Date(rownames(variable)))) +
+      geom_line(aes(y = variable$small, color = as.character(legend[1]))) +
+      geom_line(aes(y = variable$med, color = as.character(legend[2]))) +
+      geom_line(aes(y = variable$big, color = as.character(legend[3]))) +
+      geom_line(aes(y = variable$common, color = as.character(legend[4]))) +
+      geom_line(aes(y = variable$majority, color = as.character(legend[5]))) +
+      geom_line(aes(y = variable$grammar, color = as.character(legend[6]))) +
+      labs(title = title, x = xlab, y = title,color='Legend') +
+      theme_minimal()
 }
+```
 
-all_signals <- data.frame(small=signal_small, med=signal_med, big=signal_big, common=signal_common)
-names(all_signals) <- c('small','med','big','common')
-grammar_expr <- get_grammar_expr(all_signals)
-grammar_signal <- get_grammar_signal(all_signals,grammar_expr)
+```{r echo=F, fig.width=6, fig.height=2, fig.align="center"}
+plot_graph_all(cumsum(all_signals), colnames(all_signals), "Cumulative sum of all signals", "Date")
+```
+
+```{r echo=F}
+pool_values_all <- data.frame(
+  get_investment_values(signal_small, training_index), get_investment_values(signal_med, training_index),
+  get_investment_values(signal_big, training_index), get_investment_values(signal_common, training_index),
+  get_investment_values(signal_majority, training_index), get_investment_values(signal_grammar, training_index)
+)
+colnames(pool_values_all) <- c("small", "med", "big", "common","majority","grammar")
+rownames(pool_values_all) <- rownames(all_signals)
 ```
 
 ```{r}
-majority_signal <- get_majority_signal(pool_signals)
-all_signals <- data.frame(pool_signals, majority_signal)
+plot_graph_all(pool_values_all, colnames(pool_values_all), "All investment values", "Date")
 ```
 
-```{r}
-plot_graph(cumsum(all_signals), as.xts(all_signals), colnames(all_signals), "Signals", "Date", "Signal")
-```
+# Performance on test (4 marks)
+>> The performance of, and comments on, the model and backtesting strategy. How does this perform over unseen data (and why) and what level of profit would it yield?
+
+## Backtest on future dates
 
 ```{r}
-# Test data: SPY index from 2022 to 2023 and QQQ index from 2018 to 2021
-getSymbols("SPY", src = "yahoo", from = "2022-01-01", to = "2023-01-01")
-test_year <- Cl(SPY)
-getSymbols("QQQ", src = "yahoo", from = "2018-01-01", to = "2021-12-31")
-test_index <- Cl(QQQ)
-```
-
-```{r}
-# Evaluate on test data
 test_signal_small <- get_signal(parameter_small, test_year)
 test_signal_med <- get_signal(parameter_med, test_year)
 test_signal_big <- get_signal(parameter_big, test_year)
 test_signal_common <- get_signal(parameter_common, test_year)
+test_pool_signals <- data.frame(test_signal_small, test_signal_med, test_signal_big, test_signal_common)
+colnames(test_pool_signals) <- c("small", "med", "big", "common")
 ```
 
 ```{r}
-pool_signals_test <- data.frame(test_signal_small, test_signal_med, test_signal_big, test_signal_common)
-colnames(pool_signals_test) <- c("test_signal_small", "test_signal_med", "test_signal_big", "test_signal_common")
+test_signal_majority <- get_majority_signal(test_pool_signals)
+test_signal_grammar <- get_grammar_signal(test_pool_signals,grammar_expr)
+test_all_signals <- data.frame(test_pool_signals, test_signal_majority, test_signal_grammar)
+colnames(test_all_signals) <- c("small", "med", "big", "common","majority", "grammar")
 ```
 
 ```{r}
-plot_graph(cumsum(pool_signals_test), pool_signals_test, colnames(pool_signals_test), "Cumulative sum of signals", "Date", "Cumulative sum of signals")
+plot_graph_all(cumsum(test_all_signals), colnames(test_all_signals), "Signals", "Date")
 ```
 
-```{r}
-pool_values_test <- data.frame(
-  get_investment_values(parameter_small, test_year), get_investment_values(parameter_med, test_year),
-  get_investment_values(parameter_big, test_year), get_investment_values(parameter_common, test_year)
+```{r echo=F}
+pool_values_all <- data.frame(
+  get_investment_values(signal_small, training_index), get_investment_values(signal_med, training_index),
+  get_investment_values(signal_big, training_index), get_investment_values(signal_common, training_index),
+  get_investment_values(signal_majority, training_index), get_investment_values(signal_grammar, training_index)
 )
-colnames(pool_values_test) <- c("value_small_test", "value_med_test", "value_big_test", "value_common_test")
+colnames(pool_values_all) <- c("small", "med", "big", "common","majority","grammar")
+rownames(pool_values_all) <- rownames(all_signals)
 ```
 
 ```{r}
-plot_graph(pool_values_test, pool_values_test, colnames(pool_values_test), "Investment values", "Date", "Investment value")
+plot_graph_all(pool_values_all, colnames(pool_values_all), "All investment values", "Date")
 ```
 
-```{r}
-majority_signal_test <- get_majority_signal(pool_signals_test)
-all_signals_test <- data.frame(pool_signals_test, majority_signal_test)
-```
+## Test on another stock index
 
-```{r}
-plot_graph(cumsum(all_signals_test), all_signals_test, colnames(all_signals_test), "Signals", "Date", "Signal")
-```
+# Comparison (3 marks)
+>> Comparison against other approaches. The choice of what you compare with is yours. At least try a random solution or the performance of the mean value (if appropriate) and look at the performance obtained
+
+
+
+
