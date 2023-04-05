@@ -1,6 +1,6 @@
 ---
 title: "Group28_CS971"
-author: "celia rubio madrigal, girish koushik"
+author: "Celia Rubio Madrigal, Girish Koushik"
 date: ""
 output: pdf_document
 header-includes:
@@ -20,27 +20,28 @@ library(gramEvol)
 set.seed(42)
 ```
 
-# Introduction and background (4 marks)
->> Background to the problem - a short review of the approach you are going to employ and a brief overview of related work in the area drawn from either published papers or blog postings
+\makeatletter
+\renewcommand{\@makefnmark}{\makebox{\normalfont[\@thefnmark]}}
+\makeatother
 
-Algorithmic trading refers to any form of trading using sophisticated algorithms to automate all or some part of the trade cycle. The use of technical indicators to figure out the best time to buy and sell stocks has been around for a long time. The most popular technical indicators are the simple moving average (SMA), the exponential moving average (EMA), the relative strength index (RSI), the moving average convergence divergence (MACD), and the Bollinger bands. The MACD is a trend-following momentum indicator that shows the relationship between two moving averages of a security's price. A standard MACD is calculated by subtracting the 26-day exponential moving average (EMA) from the 12-day EMA. The result of that calculation is the MACD line. A nine-day EMA of the MACD called the "signal line," is then plotted on top of the MACD line, which can function as a trigger for buy and sell signals. Traders may buy the security when the MACD crosses above its signal line and sell—or short—the security when the MACD crosses below the signal line. The MACD indicator is used to identify the trend direction as well as the momentum.
+# Introduction and background
+Algorithmic trading refers to any form of trading using sophisticated algorithms to automate all or some part of the trade cycle. The use of technical indicators to figure out the best time to buy and sell stocks has been around for a long time. The most popular technical indicators are the simple moving average (SMA), the exponential moving average (EMA), the relative strength index (RSI), the moving average convergence divergence (MACD), and the Bollinger bands. 
 
+The MACD is a trend-following momentum indicator that shows the relationship between two moving averages of a security's price. A standard MACD is calculated by subtracting the 26-day exponential moving average (EMA) from the 12-day EMA. The result of that calculation is the MACD line. A nine-day EMA of the MACD called the "signal line," is then plotted on top of the MACD line, which can function as a trigger for buy and sell signals. Traders may buy the security when the MACD crosses above its signal line and sell ---or short--- the security when the MACD crosses below the signal line. The MACD indicator is used to identify the trend direction as well as the momentum. Our project will use optimization to find the best parameters for the MACD, as well as build other custom indicators to increase profit based on trading signals.
 
-The authors in [1] take a combined signal approach to increase profitability by combining the signals from multiple technical indicators. They make use of different trading rules such as the moving average cross-over rule (MAC-O) and trading range break-outs (TRB-O). While the MAC-O rule compares a short-run moving average to a long-run moving average, the TRB-O rule generates a buy signal when the prices cross above the local maximum and a sell signal when the prices cross below the local minimum. The trading rules are applied on the different stock indices like NASDAQ, DJIA, and TSX300 and a majority voting technique is adopted to find the best trading signal. While the results obtained were statistically significant, the authors stress the need to find better parameters for the technical indicators and an AI-based method to implement the combined signal approach.
-
-
-In [2], the authors propose to combine the technical indicators RSI and MA and optimise them using the genetic algorithms (GA) to find the best trading signal for the foreign exchange market. The focus is on calculating the most appropriate trade timing, rather than predicting trading prices. The study uses machine learning to obtain objective results by utilizing information from past market trends. Trading rules are optimized using genetic algorithms by generating a population of trading rules based on technical indexes. The fitness of each rule is evaluated based on its profitability and stability. The fittest rules are then selected for reproduction, where crossover and mutation operators are applied to create new offspring. This process is repeated for several generations until the optimal trading rule is found. The results are compared with a method that uses a Neural Network and the paper concludes that the proposed GA system outperforms the Neural Network method in terms of profitability and stability.
-
-
-The different components of algorithmic trading (AT) and the techniques involved are explained in the survey paper [3]. The article discusses two principal approaches to risk management: limiting the amount of risk and limiting the type of risk. The former involves managing exposure through limiting by penalty or constraint, such as leverage, while the latter involves eliminating whole types of exposure. Algorithmic trading involves several steps such as data cleaning, pre-trade analysis, trade signal generation, trade execution, and post-trade handling. Finally, it highlights that the competitive nature of algorithmic trading makes for a secretive community where implementation details are difficult to find. In this project, we are focussing on generating the trade signal and then evaluating them using the backtesting technique for test data.
+The authors in \footnote{ Lento, C. and Gradojevic, N., 2007. The profitability of technical trading rules: A combined signal approach. Journal of Applied Business Research (JABR), 23(1).} take a combined signal approach to increase profitability by combining the signals from multiple technical indicators. They make use of different trading rules such as the moving average cross-over rule (MAC-O) and trading range break-outs (TRB-O).
+The trading rules are applied on the different stock indices like NASDAQ, DJIA, and TSX300 and a majority voting technique is adopted to find the best trading signal. While the results obtained were statistically significant, the authors stress the need to find better parameters for the technical indicators and an AI-based method to implement the combined signal approach. We are taking this idea of combining signals, first with a majority voting, and secondly by letting a genetic programming algorithm find the best grammar combination. We will be also using stock indices for our profit evaluation, given that they are a global view of the whole market.
 
 
-Add footnotes for this text citing the references.
+In \footnote{ Hirabayashi, A., Aranha, C. and Iba, H., 2009, July. Optimization of the trading rule in foreign exchange using genetic algorithm. In Proceedings of the 11th Annual conference on Genetic and evolutionary computation (pp. 1529-1536).}, the authors propose to combine the technical indicators RSI and MA and optimize them using genetic algorithms for the foreign exchange market. The focus is on calculating the most appropriate trade timing rather than predicting trading prices; this will also be the focus in our study. For them, their population is formed by technical indicators. The fittest rules are then selected for reproduction, where crossover and mutation operators are applied to create new offspring, and repeated for several generations until the optimal trading rule is found. In their paper, the proposed GA system outperforms a Neural Network in terms of profitability and stability. We will also use a genetic algorithm to combine technical indicators, but it will be based on grammar trees ---combinations of the optimized indicators found previously.
+
+The different components of algorithmic trading (AT) and the techniques involved are explained in the survey paper \footnote{ Treleaven, P., Galas, M. and Lalchand, V., 2013. Algorithmic trading review. Communications of the ACM, 56(11), pp.76-85.}. 
+Algorithmic trading involves several steps such as data cleaning, pre-trade analysis, trade signal generation, trade execution, and post-trade handling. In our project, we are focusing solely on the trade signal generation; therefore, we are choosing the remaining system to be simple, such as adopting a risk-neutral strategy. Finally, their paper highlights that the competitive nature of algorithmic trading makes for a secretive community where implementation details are difficult to find. We would therefore like to find more examples in the literature of real-world techniques.
+
+In summary, in this project we are focusing on generating optimal trade signals, and then evaluating them using backtesting. We will be trying to optimize the MACD parameters `nFast`, `nSlow`, and `nSig` using the Particle Swarm Optimization (PSO) algorithm, replacing the usual 12, 26 and 9 values. We are training the algorithm by finding the final profits of an investing period from 2018 to 2021, and using the SPY index. The optimized parameters are then used to generate the trade signal, and backtesting is performed to evaluate the performance of the trading strategy. Backtesting is done on the historical data of the S&P 500 index for the same period, as well as for the SPY index for 2022. The results are compared with the results obtained using the default parameters of the MACD indicator. Moreover, we are creating two new signals: one as the majority voting for all individual MACD signals, and another one by running a genetic programming optimization on the combination of these signals.
 
 
-# Overview of data (2 marks)
->> An overview of the of data you chose to work with (as usual, summary plots would be welcome). Working with one data set is fine but if you want to extend that to consider several assets then that is okay too
-
+# Overview of data
 
 ```{r results="hide", message=F, warning=F}
 # Training data: SPY index from 2018 to 2021
@@ -57,9 +58,7 @@ getSymbols("QQQ", src = "yahoo", from = "2018-01-01", to = "2021-12-31")
 test_index <- Cl(QQQ) # (Changing the index)
 ```
 
-# Trading strategy (9 marks)
->> Details of your trading strategy and any specific decisions about the representation, fitness function, model configuration etc. along with details about implementation, any key parameters  etc...
-
+# Trading strategy
 ## Optimising MACD parameters with PSO
 
 First, we will choose the best parameters for the MACD indicator. We will need a function that, given a set of parameters and some closing prices, will give the signal to buy, sell or hold for the following day. This is automatically calculated by `TTR`'s `MACD` function, which we wrap into `get_signal` and set to hold the first days of the sliding window.
@@ -83,6 +82,8 @@ backtest_signal <- function(trading_signal, prices, initial_capital = 10000) {
     number_of_shares <- rep(NA, length(trading_signal) + 1)
     trading_signal <- as.vector(trading_signal); prices <- as.vector(prices)
     cash_value[1] <- initial_capital; asset_value[1] <- 0; number_of_shares[1] <- 0
+    buy_hold <- rep(NA, length(trading_signal) + 1); buy_hold[1] <- initial_capital
+    
     for (i in 1:(length(trading_signal))) {
         if (trading_signal[i] == 1 && cash_value[i] >= prices[i]) { # buy
             number_of_shares[i + 1] <- number_of_shares[i] + 1
@@ -95,9 +96,10 @@ backtest_signal <- function(trading_signal, prices, initial_capital = 10000) {
             cash_value[i + 1] <- cash_value[i]
         }
         asset_value[i + 1] <- number_of_shares[i + 1] * prices[i]
+        buy_hold[i+1] = floor(initial_capital / prices[1]) * prices[i]
     }
     return(data.frame(
-        cash_value = cash_value, asset_value = asset_value,
+        cash_value = cash_value, asset_value = asset_value, buy_hold = buy_hold,
         number_of_shares = number_of_shares, total_value = cash_value + asset_value
     ))
 }
@@ -176,6 +178,7 @@ get_grammar_signal <- function(signals,expr) { return(eval(expr)) }
 ```{r warning=F}
 grammar_expr <- get_grammar_expr(pool_signals)
 signal_grammar <- get_grammar_signal(pool_signals,grammar_expr)
+grammar_expr
 ```
 
 # Performance on training (3 marks)
@@ -187,7 +190,7 @@ colnames(all_signals) <- c("small", "med", "big", "common","majority", "grammar"
 ```
 
 ```{r echo=F}
-plot_graph_all <- function(variable, legend, title, xlab, ylab) {
+plot_graph_all <- function(variable, legend, title, xlab, ylab, bh=FALSE) {
     ggplot(variable, aes(x = as.Date(rownames(variable)))) +
       geom_line(aes(y = variable$small, color = as.character(legend[1]))) +
       geom_line(aes(y = variable$med, color = as.character(legend[2]))) +
@@ -196,7 +199,8 @@ plot_graph_all <- function(variable, legend, title, xlab, ylab) {
       geom_line(aes(y = variable$majority, color = as.character(legend[5]))) +
       geom_line(aes(y = variable$grammar, color = as.character(legend[6]))) +
       labs(title = title, x = xlab, y = title,color='Legend') +
-      theme_minimal()
+      theme_minimal() +
+      if (bh) {geom_line(aes(y = variable$buy_hold, color = as.character(legend[7])))}
 }
 ```
 
@@ -205,17 +209,27 @@ plot_graph_all(cumsum(all_signals), colnames(all_signals), "Cumulative sum of al
 ```
 
 ```{r echo=F}
+get_investment_values <- function(signal, index) {
+    return(backtest_signal(signal, index, 10000)$total_value[-1])
+}
+get_buy_hold <- function(signal,index) {
+  return(backtest_signal(signal, index, 10000)$buy_hold[-1])
+}
+```
+
+```{r echo=F}
 pool_values_all <- data.frame(
   get_investment_values(signal_small, training_index), get_investment_values(signal_med, training_index),
   get_investment_values(signal_big, training_index), get_investment_values(signal_common, training_index),
-  get_investment_values(signal_majority, training_index), get_investment_values(signal_grammar, training_index)
+  get_investment_values(signal_majority, training_index), get_investment_values(signal_grammar, training_index),
+  get_buy_hold(signal_small, training_index)
 )
-colnames(pool_values_all) <- c("small", "med", "big", "common","majority","grammar")
+colnames(pool_values_all) <- c("small", "med", "big", "common","majority","grammar","buy_hold")
 rownames(pool_values_all) <- rownames(all_signals)
 ```
 
 ```{r}
-plot_graph_all(pool_values_all, colnames(pool_values_all), "All investment values", "Date")
+plot_graph_all(pool_values_all, colnames(pool_values_all), "All investment values", "Date",bh=TRUE)
 ```
 
 # Performance on test (4 marks)
@@ -244,17 +258,18 @@ plot_graph_all(cumsum(test_all_signals), colnames(test_all_signals), "Signals", 
 ```
 
 ```{r echo=F}
-pool_values_all <- data.frame(
-  get_investment_values(signal_small, training_index), get_investment_values(signal_med, training_index),
-  get_investment_values(signal_big, training_index), get_investment_values(signal_common, training_index),
-  get_investment_values(signal_majority, training_index), get_investment_values(signal_grammar, training_index)
+pool_values_all_test <- data.frame(
+  get_investment_values(test_signal_small, test_year), get_investment_values(test_signal_med, test_year),
+  get_investment_values(test_signal_big, test_year), get_investment_values(test_signal_common, test_year),
+  get_investment_values(test_signal_majority, test_year), get_investment_values(test_signal_grammar, test_year),
+  get_buy_hold(test_signal_small, test_year)
 )
-colnames(pool_values_all) <- c("small", "med", "big", "common","majority","grammar")
-rownames(pool_values_all) <- rownames(all_signals)
+colnames(pool_values_all_test) <- c("small", "med", "big", "common","majority","grammar","buy_hold")
+rownames(pool_values_all_test) <- rownames(test_all_signals)
 ```
 
 ```{r}
-plot_graph_all(pool_values_all, colnames(pool_values_all), "All investment values", "Date")
+plot_graph_all(pool_values_all_test, colnames(pool_values_all_test), "All investment values", "Date",bh=TRUE)
 ```
 
 ## Test on another stock index
