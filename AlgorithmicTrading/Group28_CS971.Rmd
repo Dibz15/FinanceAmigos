@@ -1,6 +1,6 @@
 ---
-title: "Group28_CS971"
-author: "Celia Rubio Madrigal, Girish Koushik"
+title: "Group 28 - CS971"
+author: "Celia Rubio Madrigal, Girish Koushik "
 date: ""
 output: pdf_document
 header-includes:
@@ -459,7 +459,7 @@ test_all_signals <- as.data.frame(test_all_signals)
 test_all_signals$lstm <- as.numeric(test_all_signals$lstm)
 ```
 
-For our first test set (i.e., SPY from 2022 to 2023), we are plotting our best signal `grammar` against the `lstm` signal from Group 27. For this time period, we can observe that, due to the bear market, our `grammar` signal performs better than all the other signals, especially the `buy_hold` signal. This is because, in a bear market, the indicators expect the prices to keep going down and hence, end up selling the stocks quickly to cover up the losses. Our signal also does better than the `lstm` signal which has been trained on the SPY data to predict prices.
+For our first test set (i.e., SPY from 2022 to 2023), we plot our best signal `grammar` against the `lstm` signal from Group 27. For this period, we can observe that, due to the bear market, our `grammar` signal performs better than all the other signals, especially the `buy_hold` signal. This is because, in a bear market, the indicators expect the prices to keep going down and hence, end up selling the stocks quickly to cover up the losses. Our signal also does better than the `lstm` signal which has been trained on the SPY data to predict prices.
 
 ``` {r echo=F, fig.width=6, fig.height=2, fig.align="center"}
 lstm_compare_spy <- data.frame(
@@ -497,7 +497,7 @@ qqq_all_signals <- as.data.frame(qqq_all_signals)
 qqq_all_signals$lstm <- as.numeric(qqq_all_signals$lstm)
 ```
 
-For our second test set (i.e., QQQ data from 2018 to 2021), we are plotting our best signal `grammar` against the `lstm` signal from Group 27. For this time period, we can observe that, due to the bull market, our `grammar` signal performs better than the `lstm` signal, but not the `buy_hold` signal. This is because, in a bull market, the indicators expect the prices to keep going up and hence, the `buy_hold` signal performs better than all the other strategies. Note that the `lstm` signal does not perform well in a bull market as it predicts immediate losses.
+For our second test set (i.e., QQQ data from 2018 to 2021), we plot our best signal `grammar` against the `lstm` signal. For this period, we can observe that, due to the bull market, our `grammar` signal performs better than the `lstm` signal, but not the `buy_hold` signal. This is because, in a bull market, the indicators expect the prices to keep going up and hence, the `buy_hold` signal performs better than all the other strategies. Note that the `lstm` signal does not perform well in a bull market as it predicts immediate losses.
 
 ``` {r echo=F, fig.width=6, fig.height=2, fig.align="center"}
 lstm_compare_qqq <- data.frame(
