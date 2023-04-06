@@ -27,7 +27,7 @@ library(gridExtra)
 
 # Price Prediction-Based Trading
 
-Price Prediction-Based Trading is a strategy that utilizes machine learning and statistical analysis to forecast future asset prices, aiming to identify market trends and potential reversals. Key aspects include using historical financial data, selecting suitable prediction models, preprocessing data through feature engineering, evaluating model performance, implementing risk management strategies, and continuously updating models to maintain accuracy. The use of historical financial data, the selection of appropriate prediction models, the preprocessing of data through feature engineering, the evaluation of model performance, the implementation of risk management strategies, and the continuous updating of models to maintain accuracy are all crucial elements. Although this method has the potential to enhance decision-making and market understanding, it is important to remember that price predictions inherently involve some degree of uncertainty and that no model can guarantee a 100% success rate.
+Price Prediction-Based Trading is a strategy that utilises machine learning and statistical analysis to forecast future asset prices, aiming to identify market trends and potential reversals. Key aspects include using historical financial data, selecting suitable prediction models, preprocessing data through feature engineering, evaluating model performance, implementing risk management strategies, and continuously updating models to maintain accuracy. The use of historical financial data, the selection of appropriate prediction models, the preprocessing of data through feature engineering, the evaluation of model performance, the implementation of risk management strategies, and the continuous updating of models to maintain accuracy are all crucial elements. Although this method has the potential to enhance decision-making and market understanding, it is important to remember that price predictions inherently involve some degree of uncertainty and that no model can guarantee a 100% success rate.
 
 **References:**
 <https://www.simplilearn.com/tutorials/machine-learning-tutorial/stock-price-prediction-using-machine-learning>
@@ -50,26 +50,26 @@ The above diagram is an overview of our PSO training process, including the prep
 
 ### Simple Moving Average (SMA)
 
-In the world of finance, the **Simple Moving Average (SMA)** is a common tool for examining stock prices and trading volume over time. In the field of AI for Finance, SMA may be used as a component in ML models or as the foundation of an algorithmic trading system. In a nutshell, SMA "moves" along the time series by averaging a predetermined amount of data points inside a predetermined time interval. The goal is to eliminate noise caused by temporary variations so that the true trends become apparent. Simple moving averages (SMAs) are used by traders to track the long-term trend of a stock or other investments without being distracted by short-term fluctuations. This enables investors to evaluate longer-term and medium-term trends side by side. The price of an asset's bullish or bearish trend may be predicted with the use of a SMA. The market is considered to be in an uptrend if the SMA is moving higher, and a downtrend if the SMA is moving downward. Crossing the short-term SMA above the long-term SMA creates a buy signal, while crossing the short-term SMA below the long-term SMA results in a sell signal. **Reference:** <https://www.investopedia.com/terms/s/sma.asp>
+In the world of finance, the **Simple Moving Average (SMA)** is a common tool for examining stock prices and trading volume over time. In a nutshell, SMA "moves" along the time series by averaging a predetermined amount of data points inside a predetermined time interval. The goal is to eliminate noise caused by temporary variations so that the true trends become apparent. Simple moving averages (SMAs) are used by traders to track the long-term trend of a stock or other investments without being distracted by short-term fluctuations. This enables investors to evaluate longer-term and medium-term trends side by side. The price of an asset's bullish or bearish trend may be predicted with the use of a SMA. The market is considered to be in an uptrend if the SMA is moving higher, and a downtrend if the SMA is moving downward. **Reference:** <https://www.investopedia.com/terms/s/sma.asp>
 
 
 ### Exponential Moving Average (EMA)
 
-For analyzing financial time series data, such as stock prices, the **Exponential Moving Average (EMA)** is a popular technical indicator. EMA is a type of moving average that assigns more weight to recent data points, making it more responsive to price changes compared to the Simple Moving Average (SMA). EMA is more suited for spotting variations in trends early on because of the smoothing feature that helps eliminate latency. Technical analysis, trading strategies, and even machine learning models all make use of EMA, demonstrating its versatility in the financial sector. Commonly employed for identifying support and resistance levels or generating buy/sell signals, EMA crossovers are often used to gauge bullish or bearish trends in the market. **Reference:** <https://www.investopedia.com/terms/e/ema.asp>
+For analysing financial time series data, such as stock prices, the **Exponential Moving Average (EMA)** is a popular technical indicator. EMA is a type of moving average that assigns more weight to recent data points, making it more responsive to price changes compared to the Simple Moving Average (SMA). EMA is more suited for spotting variations in trends early on because of the smoothing feature that helps eliminate latency. Technical analysis, trading strategies, and even machine learning models all make use of EMA, demonstrating its versatility in the financial sector. Commonly employed for identifying support and resistance levels or generating buy/sell signals, EMA crossovers are often used to gauge bullish or bearish trends in the market. **Reference:** <https://www.investopedia.com/terms/e/ema.asp>
 
 
 ### Relative Strength Index (RSI)
 
-When applied to financial time-series data like stock prices, the **Relative Strength Index (RSI)** acts as a momentum oscillator. It provides short-term buy and sell signals, identifies market trends, and detects potential trend reversals or price corrections. Values for RSI range from 0 to 100 and reflect the average gains and losses over a certain time frame. RSI calculates average gains and losses over a specific period, with values ranging from 0 to 100. Overbought (above 70) or oversold (below 30) conditions indicate impending price adjustments, while a value of 50 represents a neutral trading level. When the RSI indicates a divergence between price and the oscillator, it may be time to sell or buy. In addition, RSI's center line crossovers and the formation of chart patterns like double tops and bottoms may be used to spot bullish and bearish price fluctuations. Double tops ('M' shaped) imply a downward trend reversal, whereas double bottoms ('W' shaped) indicate an upward price movement. **Reference:** <https://www.investopedia.com/terms/r/rsi.asp>
+The **Relative Strength Index (RSI)** acts as a momentum oscillator. It provides short-term buy and sell signals, identifies market trends, and detects potential trend reversals or price corrections. Values for RSI range from 0 to 100 and reflect the average gains and losses over a certain time frame. RSI calculates average gains and losses over a specific period, with values ranging from 0 to 100. Overbought (above 70) or oversold (below 30) conditions indicate impending price adjustments, while a value of 50 represents a neutral trading level. When the RSI indicates a divergence between price and the oscillator, it may be time to sell or buy. In addition, RSI's center line crossovers and the formation of chart patterns like double tops and bottoms may be used to spot bullish and bearish price fluctuations. Double tops ('M' shaped) imply a downward trend reversal, whereas double bottoms ('W' shaped) indicate an upward price movement. **Reference:** <https://www.investopedia.com/terms/r/rsi.asp>
 
 
 ### Moving Average Convergence Divergence (MACD)
 
-For financial time-series data like stock prices, the **Moving Average Convergence Divergence (MACD)** is a trend-following momentum indicator that can assist traders spot reversals in trend direction, momentum, and potential. It is calculated by subtracting the 26-period EMA from the 12-period EMA, resulting in the MACD line. To further aid in the identification of bullish or bearish trends, this line is drawn in conjunction with a 9-period EMA signal line. A bullish signal is given when the MACD line rises above the signal line. This might indicate a good time to purchase. When the MACD line drops below the signal line, however, it's interpreted as a bearish indication and may signify a good time to sell. MACD divergence from price action can signal an imminent trend reversal. For example, the 12-day EMA is \$50, and the 26-day EMA is \$48, resulting in a MACD line value of \$2. The 9-day EMA signal line is \$1.5. Since the MACD line (\$2) is above the signal line (\$1.5), it indicates that the shorter-term (12-day) momentum is stronger than the longer-term (26-day) momentum, suggesting a bullish trend. In this scenario, traders may consider it a potential buying opportunity.. If the MACD line and price action diverge, it may suggest a trend reversal, warranting caution in trading decisions. The MACD is most commonly used with daily periods, where the traditional settings of 12, 26, and 9 days are standard. **Reference:** <https://www.investopedia.com/terms/m/macd.asp>
+For financial time-series data like stock prices, the **Moving Average Convergence Divergence (MACD)** is a trend-following momentum indicator that can help traders spot reversals in trend direction, momentum, and potential. It is calculated by subtracting the 26-period EMA from the 12-period EMA, resulting in the MACD line. To further aid in the identification of bullish or bearish trends, this line is drawn in conjunction with a 9-period EMA signal line. A bullish signal is given when the MACD line rises above the signal line. This might indicate a good time to purchase. When the MACD line drops below the signal line, however, it's interpreted as a bearish indication and may signify a good time to sell. MACD divergence from price action can signal an imminent trend reversal. For example, the 12-day EMA is \$50, and the 26-day EMA is \$48, resulting in a MACD line value of \$2. The 9-day EMA signal line is \$1.5. Since the MACD line (\$2) is above the signal line (\$1.5), it indicates that the shorter-term (12-day) momentum is stronger than the longer-term (26-day) momentum, suggesting a bullish trend. In this scenario, traders may consider it a potential buying opportunity.. If the MACD line and price action diverge, it may suggest a trend reversal, warranting caution in trading decisions. The MACD is most commonly used with daily periods, where the traditional settings of 12, 26, and 9 days are standard. **Reference:** <https://www.investopedia.com/terms/m/macd.asp>
 
 ### Bollinger Bands 
 
-Bollinger Bands is a popular technical analysis tool used by traders and investors to measure the volatility of an asset and identify potential overbought or oversold conditions. Bollinger Bands consist of three lines: a moving average (typically a simple moving average) and two standard deviation lines plotted above and below the moving average. In AI for Finance, Bollinger Bands can serve as a signal for a variety of machine learning models and algorithmic trading methods. 
+Bollinger Bands is a popular technical analysis tool used by traders and investors to measure the volatility of an asset and identify potential overbought or oversold conditions. Bollinger Bands consist of three lines: a moving average (typically a simple moving average) and two standard deviation lines plotted above and below the moving average.
 
 **Here's a brief explanation of how Bollinger Bands work:**
 
@@ -81,13 +81,13 @@ Bollinger Bands is a popular technical analysis tool used by traders and investo
 
 For example, A common Bollinger Bands trading technique is to purchase when the asset's price falls below the lower band (a possible oversold indication) and sell when it rises above the upper band (a possible overbought signal) (a potential overbought signal).  In combination with other technical indicators or features, a machine learning model might utilise these signals to understand the patterns in the data and improve the quality of its forecasts or trade signals. 
 
-It's important to note that Bollinger Bands, like any other technical indicator, should not be used in isolation. Combining Bollinger Bands with other technical indicators, fundamental analysis, or machine learning models can provide a more robust and comprehensive approach to analyzing and trading financial markets.
+It's important to note that Bollinger Bands, like any other technical indicator, should not be used in isolation. Combining Bollinger Bands with other technical indicators, fundamental analysis, or machine learning models can provide a more robust and comprehensive approach to analysing and trading financial markets.
 
 **Reference:** <https://www.investopedia.com/terms/b/bollingerbands.asp>
 
 ### As Features
 
-The aforementioned technical indicators represent aggregate information about the asset's price movements. Because of this, we have integrated them in our dataset as features from which the neural network could potential learn predictive price patterns.
+The aforementioned technical indicators represent aggregate information about the asset's price movements. Because of this, we have integrated them in our dataset as features from which the neural network could potentially learn predictive price patterns.
 
 ```{r, echo=F}
 prepare_stock_data = function(stock_data) {
@@ -207,7 +207,7 @@ denormalize_data <- function(normalized_data, col_mins, col_ranges) {
 We are using two functions for normalising and denormalising the data. The normalize_data function scales the input data to a range between 0 and 1, while the denormalize_data function reverses this process, restoring the data to its original range. **Normalisation** is a process where the numerical data are often normalised to a range between 0 and 1 as a preprocessing step. The performance of machine learning algorithms can be enhanced by using this method to reduce the effect of variables with varying scales. In contrast, **Denormalisation** involves reversing normalisation by rescaling the data to its original range. We are utilising normalisation as a preprocessing step because we found empirically that performance is drastically improved by normalisation. This is likely because neural networks perform best in the [-1, 1] range due to activations, as well as the fact that normalisation puts all the features in the same absolute range. When certain features are at a much different scale (e.g. RSI vs Closing Price) this can hurt the performance of the NN.
 
 ## Preprocessing using Sliding Windows
-```{r}
+```{r, echo=F}
 preprocess_data <- function(data, lookback_window, horizon) {
   # Normalize the data
   normalized_data <- data
@@ -224,7 +224,7 @@ preprocess_data <- function(data, lookback_window, horizon) {
 }
 ```
 
-In the above code chunk, the preprocess_data function in the provided R code preprocesses the input data for time series prediction by creating input-output pairs for a given lookback window and prediction horizon. In order to store the input data and the desired values, it makes two arrays, x and y. The function iterates through the data, extracting segments using a sliding window of the lookback window size for input and the corresponding target values, based on the prediction horizon. It returns a list containing the input-output pairs (x and y). This allows the NN model to see just the required input data with a ground-truth price for output comparison.
+The `preprocess_data` function in the provided R code preprocesses the input data for time series prediction by creating input-output pairs for a given lookback window and prediction horizon. In order to store the input data and the desired values, it makes two arrays, x and y. The function iterates through the data, extracting segments using a sliding window of the lookback window size for input and the corresponding target values, based on the prediction horizon. It returns a list containing the input-output pairs (x and y). This allows the NN model to see just the required input data with a ground-truth price for output comparison.
 
 
 ## Long Short-Term Memory (LSTM)
@@ -264,20 +264,20 @@ build_lstm_model <- function(input_shape, learning_rate, regularization) {
 In the above chunk of code, we have defined a function called build_lstm_model that creates and compiles an LSTM model using the Keras library. The function takes three arguments: input_shape, learning_rate, and regularization. The keras model sequential() function is used to build the model architecture, and it generates a linear stack of layers that may be appended to in sequence using the %>% pipe operator. 
 The layers of the model are as follows: 
 
-**layer_lstm:** The first LSTM layer has 20 units and takes an input_shape as input. The return_sequences parameter is set to TRUE, which means that the layer will output the full sequence of hidden states for each time step, rather than just the final hidden state. The kernel_regularizer parameter is set to L2 regularization, with the strength controlled by the regularization argument.
+**layer_lstm:** The first LSTM layer has 20 units and takes an input_shape as input. The return_sequences parameter is set to TRUE, which means that the layer will output the full sequence of hidden states for each time step, rather than just the final hidden state. The kernel_regularizer parameter is set to L2 regularisation, with the strength controlled by the regularization argument.
 
 **layer_dropout:** After the initial LSTM layer, a layer with a dropout rate of 0.5 is added. This layer randomly sets a proportion of 50% of the input units to 0 during training, which helps prevent overfitting. 
 
-**layer_lstm:** The second LSTM layer has 10 units and also uses L2 regularization, with the strength controlled by the regularization argument. Since the return_sequences parameter is not set, this layer will only output the final hidden state by default.
+**layer_lstm:** The second LSTM layer has 10 units and also uses L2 regularisation, with the strength controlled by the regularization argument. Since the return_sequences parameter is not set, this layer will only output the final hidden state by default.
 
 **layer_dropout:** Another dropout layer with a rate of 0.5 is added after the second LSTM layer, further helping to prevent overfitting.
 
 **layer_dense:** A dense (fully connected) output layer with one unit is added at the end of the model. This layer is responsible for producing the final prediction.
 
-The compile function is used to set up the model for training after the architecture has been defined. Mean Squared Error (MSE) is chosen as the loss function, which is typically employed for regression issues, and Adam is chosen as the optimizer with the learning rate given. Finally, the build_lstm_model function returns the compiled LSTM model, which can be used for training and predicting on financial time series data. **References:** <https://medium.com/geekculture/10-hyperparameters-to-keep-an-eye-on-for-your-lstm-model-and-other-tips-f0ff5b63fcd4>
+The compile function is used to set up the model for training after the architecture has been defined. Mean Squared Error (MSE) is chosen as the loss function, which is typically employed for regression issues, and Adam is chosen as the optimiser with the learning rate given. Finally, the build_lstm_model function returns the compiled LSTM model, which can be used for training and predicting on financial time series data. **References:** <https://medium.com/geekculture/10-hyperparameters-to-keep-an-eye-on-for-your-lstm-model-and-other-tips-f0ff5b63fcd4>
 
 
-## Particle Swarm Optimization (PSO)
+## Particle Swarm Optimisation (PSO)
 
 Particle swarm optimisation (PSO) is a robust optimisation technique used in artificial intelligence for finance to discover optimal solutions to complicated financial issues, and it was inspired by the social behaviour of flocking birds. This metaheuristic search technique is population-based; it maintains a swarm of particles (solutions) and repeatedly adjusts their positions depending on both local and global solutions found so far. This can be used with virtually any model type that has tunable parameters or weights. The choice of model depends on the specific problem you're trying to solve and the characteristics of the data. In the context of finance, PSO may be used for portfolio optimisation, with each particle representing a possible distribution of funds over a collection of assets. 
 
@@ -338,7 +338,6 @@ stock_data <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date
 
 prepped_stock_data = prepare_stock_data(stock_data)
 
-plot_stock(prepped_stock_data)
 normal_data_training = normalize_data(prepped_stock_data)
 split_data_training = train_test_split(normal_data_training)
 
@@ -346,6 +345,12 @@ train_data = split_data_training$train
 validation_data = split_data_training$val
 test_data = split_data_training$test
 ```
+
+```{r, fig.align='center', fig.width=6, fig.height=3}
+plot_stock(prepped_stock_data)
+```
+
+
 ### Data Selection 
 
 In the above plot, we have plotted a time series of all of our input features into the model. These are explained in detail in the previous sections. In the plot, it's easy to see how different features are at different scales, which is why the normalisation is necessary. In this example, we have decided to optimise and train our model using data from the closing prices of AMD (Advanced Micro Devices, Inc.) on the NYSE (New York Stock Exchange). The time period selected is from January, 2018 to January, 2023. This is then split into train, validation, and test sets and preprocessed with normalisation.
@@ -357,14 +362,14 @@ upper_bounds <- c(0.005, 0.01, 100, 50)
 initial_weights <- runif(4, min=lower_bounds, max=upper_bounds)
 ```
 
-We have defined the lower and upper bounds for each of the LSTM hyperparameters to be optimized by PSO. We are then generating an initial set of hyperparameters randomly within these bounds. The specific hyperparameters being optimized are:
+We have defined the lower and upper bounds for each of the LSTM hyperparameters to be optimised by PSO. We are then generating an initial set of hyperparameters randomly within these bounds. The specific hyperparameters being optimised are:
 
 Learning rate: Ranges from 0.0001 to 0.005.
-Regularization: Ranges from 0.001 to 0.01.
+Regularisation: Ranges from 0.001 to 0.01.
 Epochs: Ranges from 10 to 100.
 Lookback window: Ranges from 5 to 50.
 
-With these initial hyperparameters, we can apply the PSO algorithm to find the optimal values for each parameter within their specified bounds. This will allow us to minimize the mean squared error (MSE) and improve the LSTM model's predictive accuracy for stock prices. The bounds for the algorithm were found empirically to be a range of values that maintain fairly stable performance. With that said, it's still necessary for the PSO algorithm to find the optimal set of parameters.
+With these initial hyperparameters, we can apply the PSO algorithm to find the optimal values for each parameter within their specified bounds. This will allow us to minimise the mean squared error (MSE) and improve the LSTM model's predictive accuracy for stock prices. The bounds for the algorithm were found empirically to be a range of values that maintain fairly stable performance. With that said, it's still necessary for the PSO algorithm to find the optimal set of parameters.
 
 ```{r eval=FALSE, echo=TRUE, message=FALSE, include=FALSE}
 result <- psoptim( 
@@ -519,13 +524,13 @@ backtest_results = function(predicted, actual, normalized_data, buy_threshold = 
   
   backtest_loop = function(predicted_profit_pct, portfolio_value, signals, actual_value) {
     cash <- portfolio_value
-    num_shares <- 0
+    num_shares <- 0 #portfolio_value / actual_value[1]
     # Initialize the cash_value vector
     cash_value <- rep(NA, length(signals))
     asset_value = rep(NA, length(signals))
     total_portfolio_value = rep(NA, length(signals))
     buy_and_hold_value = rep(NA, length(signals))
-    buy_and_hold_shares = floor(cash / actual_value[1])
+    buy_and_hold_shares = floor(portfolio_value / actual_value[1])
     
     # Backtesting loop
     for (i in 1:(length(signals) - 1)) {
@@ -533,12 +538,12 @@ backtest_results = function(predicted, actual, normalized_data, buy_threshold = 
       buy_and_hold_value[i] = buy_and_hold_shares * actual_value[i]
       
       if (signals[i] == "Buy" && cash >= actual_value[i]) {
-        investment_amount <- cash * abs(predicted_profit_pct[i])
+        investment_amount <- min(cash, cash * abs(predicted_profit_pct[i]))
         num_shares_bought <- floor(investment_amount / actual_value[i])
         num_shares <- num_shares + num_shares_bought
         cash <- cash - (num_shares_bought * actual_value[i])
       } else if (signals[i] == "Sell" && num_shares > 0) {
-        sell_amount <- num_shares * actual_value[i] * abs(predicted_profit_pct[i])
+        sell_amount <- min(num_shares * actual_value[i], num_shares * actual_value[i] * abs(predicted_profit_pct[i]))
         num_shares_sold <- floor(sell_amount / actual_value[i])
         num_shares <- num_shares - num_shares_sold
         cash <- cash + (num_shares_sold * actual_value[i])
@@ -585,12 +590,12 @@ for (i in 1:(length(signals) - 1)) {
   buy_and_hold_value[i] = buy_and_hold_shares * actual_value[i]
   
   if (signals[i] == "Buy" && cash >= actual_value[i]) {
-    investment_amount <- cash * abs(predicted_profit_pct[i])
+    investment_amount <- min(cash, cash * abs(predicted_profit_pct[i]))
     num_shares_bought <- floor(investment_amount / actual_value[i])
     num_shares <- num_shares + num_shares_bought
     cash <- cash - (num_shares_bought * actual_value[i])
   } else if (signals[i] == "Sell" && num_shares > 0) {
-    sell_amount <- num_shares * actual_value[i] * abs(predicted_profit_pct[i])
+    sell_amount <- min(num_shares * actual_value[i], num_shares * actual_value[i] * abs(predicted_profit_pct[i]))
     num_shares_sold <- floor(sell_amount / actual_value[i])
     num_shares <- num_shares - num_shares_sold
     cash <- cash + (num_shares_sold * actual_value[i])
@@ -684,7 +689,7 @@ normalize_data2 <- function(data_to_normalize, col_mins, col_ranges) {
 }
 ```
 
-Compare both the outputs.
+### Backtesting on AMD
 
 ```{r, results="hide", fig.keep='all', fig.align='center', fig.width=7, fig.height=4}
 symbol <- "AMD"
@@ -695,9 +700,16 @@ stock_data_test <- getSymbols(symbol, src = "yahoo", from = start_date, to = end
 
 normal_data2 = normalize_data2(prepare_stock_data(stock_data_test), 
                                normal_data_training$col_mins, normal_data_training$col_ranges)
-full_evaluation(optimal_params, train_model, normal_data2, normal_data_training, cash=100000)
+full_evaluation(optimal_params, train_model, normal_data2, normal_data_training, cash=100000, buy_threshold = 0.02, sell_threshold = -0.02)
 ```
 
+In the above chart, we show a time series of the different tracked values for our backtesting experiment. In this case, we have used our trained LSTM model to  predict the future prices of AMD, and then use that information to make decisions to buy, hold, or sell the stock. In the top plot, the price of the stock is listed using a blue line. Set on top of this line are our signals. Green for buy, red for sell, and purple for hold. The yellow line represents the asset value predicted by the LSTM model, each day at a time. 
+
+In the bottom chart, we show 'Asset Value', which represents the total value of the target asset (in this case, AMD) that is held at that point in the backtest series. 'Cash Value' is the amount of free capital that is available to purchase the asset. 'Portfolio Value' is the total combined value of cash capital and the held asset value. 'Buy and Hold Value' is a series for comparison where the target asset is purchased using the full free capital (in the above case, $100000) and then the asset is held over the entire time period. This is used as a baseline for comparison of our model.
+
+The key points of comparison in the above chart is to look at how the predicted asset value differs from the actual asset value, and also the 'Buy and Hold Value' vs the 'Portfolio Value'. In our example above, our algorithm's trading choice (ending value  ~\$120,000) far outperforms the 'buy and hold' baseline (ending value ~\$80,000). 
+
+### Backtesting on SPY
 
 ```{r, results="hide", fig.keep='all', fig.align='center', fig.width=7, fig.height=4}
 symbol <- "SPY"
@@ -707,14 +719,13 @@ stock_data_aapl <- getSymbols(symbol, src = "yahoo", from = start_date, to = end
 
 normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
 full_evaluation(optimal_params, train_model, normal_data_aapl$data, 
-                normal_data_aapl, cash=100000, buy_threshold=0.02, sell_threshold=-0.05)
+                normal_data_aapl, cash=100000, buy_threshold=0.02, sell_threshold=-0.02)
 ```
+Above we plot another experiment with backtesting using data for the S&P 500 Index (in this case, the ticker SPY represents an ETF (exchange-traded fund) that matches the overall index). 
 
-Reasons for why the model is successful and what is it doing.
-
+The characteristics of this curve are fairly different, where we can see there are a lot more 'hold' signals than buy/sell as was the case in the backtest for AMD. However, we still see that the LSTM model combined with our signal selection algorithm still outperforms the 'buy and hold' baseline strategy. This is a bit surprising, because the LSTM was trained and optimised on AMD so we were uncertain if the prediction and signaling strategy would be applicable to other assets. Not shown, we also found that our strategy is successful on other assets on the NYSE such as AAPL, TSLA, MS, and COST. 
 
 ```{r, hide='all', echo=F}
-
 symbol <- "SPY"
 start_date <- as.Date("2021-10-01")
 end_date <- as.Date("2023-04-01")
@@ -743,10 +754,13 @@ for (i in 1:(nrow(normal_data_aapl$data) - 70)) {
 }
 ```
 
+### Sliding Window Portfolio Experiment
+
+In case the particular characteristics of our validation/test period were influencing our results, we setup a test with a moving period of prediction throughout 2022. With an experimental window of 70 days, we find the ending portfolio value and compare it against the buy and hold strategy. The window is shifted forward by 1 day, and the the comparison is again made. Using this, we still find that the LSTM signaling strategy outperforms buy and hold over the majority of test periods for the S&P 500 index. The exact percentage is given below.
+
 ```{r}
 cat("Percentage of windows where LSTM > Buy and Hold: ", (higher_count / total_count) * 100, "%")
 ```
-
 
 ```{r, hide='all', echo=F}
 predict_real_days = function(optimal_params, model, test_data, normal_data, buy_threshold=0.02, sell_threshold=-0.02) {
@@ -798,9 +812,9 @@ predict_real_days = function(optimal_params, model, test_data, normal_data, buy_
   return(shifted_and_dated_data)
 }
 
-symbol <- "TSLA"
+symbol <- "SPY"
 start_date <- as.Date("2022-08-01")
-end_date <- as.Date("2023-04-04")
+end_date <- as.Date("2023-04-06")
 stock_data_aapl <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
 
 normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
@@ -811,7 +825,12 @@ normal_data_aapl = normalize_data(prepare_stock_data(stock_data_aapl))
 
 Buy and Hold is a passive, long-term investment strategy based on fundamental analysis and has limited risk management options. It doesn't require historical data and doesn't adapt to market changes.  In contrast, the LSTM Prediction Algorithm is a proactive trading strategy that may take advantage of both immediate and past market conditions. It's a sophisticated algorithm that can learn from past market data and apply that learning based on newer market patterns. We believe that the LSTM Prediction Algorithm offers better risk management options and can capture both short-term opportunities and long-term trends, making it more versatile compared to the Buy and Hold strategy.
 
+Looking at our charts of predicted vs. actual, it's clear that the LSTM predictions are smoothed out over a rather long period. This is probably assisted by the relatively long lookback window (24 days) of the optimised LSTM window. Overall, it seems that the LSTM may be performing something similar to EMA with a long period. Further experimentation on this would be interesting.
 
+
+## Inference for Trading Application
+
+Below, we show how the outputs of the predicted profit and recommended signals can be displayed. This signals could then be used by an analyst to invest in the target asset.
 
 ```{r, hide='all'}
 predicted_days = predict_real_days(optimal_params, train_model, normal_data_aapl$data, 
@@ -819,8 +838,8 @@ predicted_days = predict_real_days(optimal_params, train_model, normal_data_aapl
 ```
 
 ```{r}
-print(predicted_days[(nrow(predicted_days) - 5):(nrow(predicted_days) - 1),])
+print(predicted_days[(nrow(predicted_days) - 4):(nrow(predicted_days)),])
 ```
-
-
-
+```{r, eval=F, echo=F}
+write.csv(predicted_days, "predicted_days.csv", row.names = TRUE)
+```
