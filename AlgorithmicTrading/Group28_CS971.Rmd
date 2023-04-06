@@ -147,7 +147,7 @@ Now that we have a way of comparing signals, we will use the PSO algorithm to fi
 get_optimal_parameter <- function(lower_bounds, upper_bounds, index) {
     fitness <- function(params) { return(-get_profit(get_signal(params, index), index)) }
     opt_results <- hydroPSO(fn = fitness, lower = lower_bounds, upper = upper_bounds, 
-                            control = list(c1 = 2, c2 = 2, maxit = 1)) # TODO CHANGE BACK TO 100
+                            control = list(c1 = 2, c2 = 2, maxit = 100))
     return(as.integer(opt_results$par))
 }
 ```
@@ -203,7 +203,7 @@ get_grammar_expr <- function(signals) {
               var = grule(signals$small, signals$med, signals$big, signals$common))
   grammar <- CreateGrammar(rules)
   grammar_fitness <- function(expr) { return(-get_profit(eval(expr),training_index)) }
-  ge <- GrammaticalEvolution(grammar, grammar_fitness, iterations = 1, max.depth = 5)
+  ge <- GrammaticalEvolution(grammar, grammar_fitness, iterations = 100, max.depth = 5)
   return(ge$best$expressions)
 }
 get_grammar_signal <- function(signals,expr) { return(eval(expr)) }
@@ -434,3 +434,112 @@ ggplot(variable, aes(x = as.Date(rownames(variable)))) +
 ```
 ## The `grammar` signal against prediction-based signal
 
+# Compare results with the first project
+
+Accessing signal data in the form of a csv file
+
+```{r}
+zestin_signal_spy <- read.csv("predicted_days_spy.csv")
+```
+
+Compare the signals column data with the `test_all_signals` dataframe
+
+```{r}
+# Replace the column values 'buy' with 1, 'sell' with -1 and 'hold' with 0
+# austin_signal_data$Signals <- as.numeric(austin_signal_data$Signals)
+zestin_signal_spy$Signals[zestin_signal_spy$Signals == 'Buy'] <- 1
+zestin_signal_spy$Signals[zestin_signal_spy$Signals == 'Sell'] <- -1
+zestin_signal_spy$Signals[zestin_signal_spy$Signals == 'Hold'] <- 0
+```
+
+```{r}
+# Check the length of the austin signal data and append the signals column to the test_all_signals dataframe
+if (length(zestin_signal_spy$Signals) == nrow(test_all_signals)) {
+    test_all_signals <- cbind(test_all_signals, zestin_signal_spy$Signals)
+    colnames(test_all_signals)[ncol(test_all_signals)] <- "lstm"
+}else {
+    test_all_signals <- cbind(test_all_signals, zestin_signal_spy$Signals[1:nrow(test_all_signals)])
+    colnames(test_all_signals)[ncol(test_all_signals)] <- "lstm"
+}
+```
+
+```{r}
+# drop rows with NA values
+# test_all_signals <- test_all_signals[complete.cases(test_all_signals), ]
+test_all_signals[is.na(test_all_signals)] <- 0
+test_all_signals <- as.data.frame(test_all_signals)
+test_all_signals$lstm <- as.numeric(test_all_signals$lstm)
+```
+
+``` {r echo=F, fig.width=6, fig.height=2, fig.align="center"}
+lstm_compare_spy <- data.frame(
+    get_investment_values(test_signal_grammar, test_year), get_investment_values(test_signal_common, test_year),
+    get_buy_hold(test_signal_small, test_year), get_investment_values(test_all_signals$lstm, test_year)
+)
+colnames(lstm_compare_spy) <- c("grammar", "common", "buy_hold", "lstm")
+rownames(lstm_compare_spy) <- rownames(test_all_signals)
+
+variable <- lstm_compare_spy
+legend <- colnames(lstm_compare_spy)
+ggplot(variable, aes(x = as.Date(rownames(variable)))) +
+      geom_line(aes(y = variable$grammar, color = as.character(legend[1]))) +
+      geom_line(aes(y = variable$common, color = as.character(legend[2]))) +
+      geom_line(aes(y = variable$buy_hold, color = as.character(legend[3]))) +
+      geom_line(aes(y = variable$lstm, color = as.character(legend[4]))) +
+      labs(title = 'Comparison against base (SPY)', x = 'Date', y = 'Total value', color='Legend') +
+      theme_minimal()
+```
+
+
+
+```{r}
+zestin_signal_qqq <- read.csv("predicted_days_qqq.csv")
+```
+
+Compare the signals column data with the `test_all_signals` dataframe
+
+```{r}
+# Replace the column values 'buy' with 1, 'sell' with -1 and 'hold' with 0
+# austin_signal_data$Signals <- as.numeric(austin_signal_data$Signals)
+zestin_signal_qqq$Signals[zestin_signal_qqq$Signals == 'Buy'] <- 1
+zestin_signal_qqq$Signals[zestin_signal_qqq$Signals == 'Sell'] <- -1
+zestin_signal_qqq$Signals[zestin_signal_qqq$Signals == 'Hold'] <- 0
+```
+
+```{r}
+# Check the length of the austin signal data and append the signals column to the qqq_all_signals dataframe
+if (length(zestin_signal_qqq$Signals) == nrow(qqq_all_signals)) {
+    qqq_all_signals <- cbind(qqq_all_signals, zestin_signal_qqq$Signals)
+    colnames(qqq_all_signals)[ncol(qqq_all_signals)] <- "lstm"
+}else {
+    qqq_all_signals <- cbind(qqq_all_signals, zestin_signal_qqq$Signals[1:nrow(qqq_all_signals)])
+    colnames(qqq_all_signals)[ncol(qqq_all_signals)] <- "lstm"
+}
+```
+
+```{r}
+# drop rows with NA values
+# test_all_signals <- test_all_signals[complete.cases(test_all_signals), ]
+qqq_all_signals[is.na(qqq_all_signals)] <- 0
+qqq_all_signals <- as.data.frame(qqq_all_signals)
+qqq_all_signals$lstm <- as.numeric(qqq_all_signals$lstm)
+```
+
+``` {r echo=F, fig.width=6, fig.height=2, fig.align="center"}
+lstm_compare_qqq <- data.frame(
+    get_investment_values(qqq_signal_grammar, test_index), get_investment_values(qqq_signal_common, test_index),
+    get_buy_hold(qqq_signal_small, test_index), get_investment_values(qqq_all_signals$lstm, test_index)
+)
+colnames(lstm_compare_qqq) <- c("grammar", "common", "buy_hold", "lstm")
+rownames(lstm_compare_qqq) <- rownames(qqq_all_signals)
+
+variable <- lstm_compare_qqq
+legend <- colnames(lstm_compare_qqq)
+ggplot(variable, aes(x = as.Date(rownames(variable)))) +
+      geom_line(aes(y = variable$grammar, color = as.character(legend[1]))) +
+      geom_line(aes(y = variable$common, color = as.character(legend[2]))) +
+      geom_line(aes(y = variable$buy_hold, color = as.character(legend[3]))) +
+      geom_line(aes(y = variable$lstm, color = as.character(legend[4]))) +
+      labs(title = 'Comparison against base (QQQ)', x = 'Date', y = 'Total value', color='Legend') +
+      theme_minimal()
+```
