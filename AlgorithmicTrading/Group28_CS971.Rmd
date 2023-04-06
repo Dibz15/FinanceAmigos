@@ -40,7 +40,7 @@ Algorithmic trading involves several steps such as data cleaning, pre-trade anal
 In summary, this project focuses on generating optimal trade signals, and then evaluating them with backtesting. We will be trying to optimize the MACD parameters `nFast`, `nSlow`, and `nSig` using the Particle Swarm Optimization (PSO) algorithm, replacing the usual 12, 26 and 9 values. We are training the algorithm by finding the final profits of an investing period from 2018 to 2021, using the S&P 500 stock index. The optimized parameters are then used to generate the trade signal, and backtesting is performed to evaluate the performance of the trading strategy. Backtesting is done on the historical data of the NASDAQ for the same period, as well as for the S&P 500 index for 2022. The results are compared with the results obtained using the default parameters of the MACD indicator. Moreover, we are creating two new signals: one as the majority voting for all individual MACD signals, and another one by running a genetic programming optimization on the combination of these signals.
 
 
-```{r, out.width='50%', fig.align='center', echo=FALSE}
+```{r, out.width='100%', fig.align='center', echo=FALSE}
 knitr::include_graphics("./Diagram-2023-04-06-1300.png")
 ```
 
@@ -339,8 +339,7 @@ plot_graph_all(pool_values_all_test, colnames(pool_values_all_test), "All invest
 
 ## Test on another stock index
 
-Similar to the previous test, we obtain the evaluation for the `test_index` index (i.e., QQQ data from 2018 to 2022). We get all
-signals with `get_signal`, `get_majority_signal` and `get_grammar_signal` again, combined so that we can plot them all and get their profits, seen below.
+Similar to the previous test, we obtain the evaluation for the `test_index` index (i.e., QQQ data from 2018 to 2021). We get all signals with `get_signal`, `get_majority_signal` and `get_grammar_signal` again, combined so that we can plot them all and get their profits, seen below.
 
 ```{r, warning=FALSE}
 qqq_signal_small <- get_signal(parameter_small, test_index)
@@ -382,7 +381,7 @@ colnames(qqq_pool_values_all) <- c("small", "med", "big", "common", "majority", 
 rownames(qqq_pool_values_all) <- rownames(qqq_all_signals)
 ```
 
-Above we calculate the number of shares during the period, and below we plot all investment values again. Following the market increase at the end, the buy-and-hold approach is very profitable, as we know. We also note that the `grammar` signal is also quite successful; having success in both test sets, we can conclude with a positive result from this method. While `big` is too conservative, the rest do not vary much.
+Above, we calculate the number of shares during the period, and below we plot all investment values again. Following the market increase at the end, the buy-and-hold approach is very profitable, as we know. We also note that the `grammar` signal is also quite successful; having success in both test sets, we can conclude with a positive result from this method. While `big` is too conservative, the rest do not vary much.
 
 ```{r echo=F, fig.width=6, fig.height=2, fig.align="center"}
 plot_graph_all(qqq_pool_values_all, colnames(qqq_pool_values_all), "All investment values (QQQ)", "Date",bh=TRUE)
@@ -450,7 +449,7 @@ test_signal_zestin$Signals[test_signal_zestin$Signals == 'Hold'] <- 0
 ```
 
 ```{r}
-# Check length of their signal data and append the signals column to the test_all_signals dataframe
+# Check length of their signal data and append the `Signals` column to the test_all_signals dataframe
 if (length(test_signal_zestin$Signals) == nrow(test_all_signals)) {
     test_all_signals <- cbind(test_all_signals, test_signal_zestin$Signals)
 }else{test_all_signals <- cbind(test_all_signals, test_signal_zestin$Signals[1:nrow(test_all_signals)])}
@@ -460,7 +459,7 @@ test_all_signals <- as.data.frame(test_all_signals)
 test_all_signals$lstm <- as.numeric(test_all_signals$lstm)
 ```
 
-For our first test set (i.e., SPY from 2022 to 2023)
+For our first test set (i.e., SPY from 2022 to 2023), we are plotting our best signal `grammar` against the `lstm` signal from Group 27. For this time period, we can observe that, due to the bear market, our `grammar` signal performs better than all the other signals, especially the `buy_hold` signal. This is because, in a bear market, the indicators expect the prices to keep going down and hence, end up selling the stocks quickly to cover up the losses. Our signal also does better than the `lstm` signal which has been trained on the SPY data to predict prices.
 
 ``` {r echo=F, fig.width=6, fig.height=2, fig.align="center"}
 lstm_compare_spy <- data.frame(
@@ -481,8 +480,6 @@ ggplot(variable, aes(x = as.Date(rownames(variable)))) +
       theme_minimal()
 ```
 
-
-
 ```{r}
 qqq_signal_zestin <- read.csv("predicted_days_qqq.csv")
 qqq_signal_zestin$Signals[qqq_signal_zestin$Signals == 'Buy'] <- 1
@@ -500,7 +497,7 @@ qqq_all_signals <- as.data.frame(qqq_all_signals)
 qqq_all_signals$lstm <- as.numeric(qqq_all_signals$lstm)
 ```
 
-For our second test set (i.e., QQQ data from 2018 to 2022)
+For our second test set (i.e., QQQ data from 2018 to 2021), we are plotting our best signal `grammar` against the `lstm` signal from Group 27. For this time period, we can observe that, due to the bull market, our `grammar` signal performs better than the `lstm` signal, but not the `buy_hold` signal. This is because, in a bull market, the indicators expect the prices to keep going up and hence, the `buy_hold` signal performs better than all the other strategies. Note that the `lstm` signal does not perform well in a bull market as it predicts immediate losses.
 
 ``` {r echo=F, fig.width=6, fig.height=2, fig.align="center"}
 lstm_compare_qqq <- data.frame(
@@ -520,3 +517,5 @@ ggplot(variable, aes(x = as.Date(rownames(variable)))) +
       labs(title = 'Comparison against Group 27 (QQQ)', x = 'Date', y = 'Total value', color='Legend') +
       theme_minimal()
 ```
+
+In conclusion, our `grammar` signal has proven to work on both types of market, bear and bull, with two different market indices and two time periods.
