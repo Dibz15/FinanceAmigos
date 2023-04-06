@@ -40,6 +40,11 @@ Algorithmic trading involves several steps such as data cleaning, pre-trade anal
 In summary, this project focuses on generating optimal trade signals, and then evaluating them with backtesting. We will be trying to optimize the MACD parameters `nFast`, `nSlow`, and `nSig` using the Particle Swarm Optimization (PSO) algorithm, replacing the usual 12, 26 and 9 values. We are training the algorithm by finding the final profits of an investing period from 2018 to 2021, using the S&P 500 stock index. The optimized parameters are then used to generate the trade signal, and backtesting is performed to evaluate the performance of the trading strategy. Backtesting is done on the historical data of the NASDAQ for the same period, as well as for the S&P 500 index for 2022. The results are compared with the results obtained using the default parameters of the MACD indicator. Moreover, we are creating two new signals: one as the majority voting for all individual MACD signals, and another one by running a genetic programming optimization on the combination of these signals.
 
 
+```{r, out.width='50%', fig.align='center', echo=FALSE}
+knitr::include_graphics("./Diagram-2023-04-06-1300.png")
+```
+
+
 # Overview of data
 
 The SPY index is a market capitalization-weighted index of the 500 largest publicly traded companies in the US. The index is a good choice for our project as it is 1/10 expense ratio of the S&P 500 index and hence, with the initial investment amount of $10000, we can figure out the best trading strategy.
@@ -165,7 +170,7 @@ param_dataframe <- rbind(parameter_small,parameter_med,parameter_big,parameter_c
 colnames(param_dataframe) <- c('Fast','Slow','Signal')
 print(param_dataframe)
 ```
-Finally we obtain the signals. We will plot them in the evaluation section.
+We can see that `small` and `medium` exchange their `nSlow` and `nSignal` parameters, such that they end up being the same signal. Also `big` has a very short difference between `nFast` and `nSlow`, so it will not react to the market as quickly. This will be why it performs well during the 2020 steep decrease for the training set. We now obtain the signals; we will plot them in the evaluation section.
 
 ```{r warning=F}
 signal_small <- get_signal(parameter_small, training_index)
@@ -276,7 +281,7 @@ rownames(pool_values_all) <- rownames(all_signals)
 
 Below we can see our total value achieved via each of the strategies, again calculated from `backtest_signal`, as well as a naive strategy which consists of buying all stocks at the beginning and holding afterwards. As the train period had a steep increase of prices at the end, the buy-and-hold approach is very successful then, as well as our `grammar` signal. The `common` signal is doing the worst, as it seems to be the most cautious, although it is interesting to see that `majority` is too. Finally, it is worth noting that `big` does very well during the steep decrease of 2020.
 ```{r echo=F, fig.width=6, fig.height=2, fig.align="center"}
-plot_graph_all(pool_values_all, colnames(pool_values_all), "All investment values", "Date",bh=TRUE)
+plot_graph_all(pool_values_all, colnames(pool_values_all), "All investment values (train)", "Date",bh=TRUE)
 ```
 
 # Performance on test
@@ -329,12 +334,12 @@ rownames(pool_values_all_test) <- rownames(test_all_signals)
 ```
 In the plot below we see how the total value progresses. The `grammar` signal is the best one to hold up against the decrease, while it is normal for the buy-and-hold to perform very badly. It is interesting to see that the `common` signal also performs well, but `majority` does not improve on the rest.
 ```{r echo=F, fig.width=6, fig.height=2, fig.align="center"}
-plot_graph_all(pool_values_all_test, colnames(pool_values_all_test), "All investment values", "Date",bh=TRUE)
+plot_graph_all(pool_values_all_test, colnames(pool_values_all_test), "All investment values (SPY)", "Date",bh=TRUE)
 ```
 
 ## Test on another stock index
 
-Similar to the previous test, we obtain the evaluation for the `test_index` index (i.e., QQQ data from 2022 to 2023). We get all
+Similar to the previous test, we obtain the evaluation for the `test_index` index (i.e., QQQ data from 2018 to 2022). We get all
 signals with `get_signal`, `get_majority_signal` and `get_grammar_signal` again, combined so that we can plot them all and get their profits, seen below.
 
 ```{r, warning=FALSE}
@@ -380,7 +385,7 @@ rownames(qqq_pool_values_all) <- rownames(qqq_all_signals)
 Above we calculate the number of shares during the period, and below we plot all investment values again. Following the market increase at the end, the buy-and-hold approach is very profitable, as we know. We also note that the `grammar` signal is also quite successful; having success in both test sets, we can conclude with a positive result from this method. While `big` is too conservative, the rest do not vary much.
 
 ```{r echo=F, fig.width=6, fig.height=2, fig.align="center"}
-plot_graph_all(qqq_pool_values_all, colnames(qqq_pool_values_all), "All investment values", "Date",bh=TRUE)
+plot_graph_all(qqq_pool_values_all, colnames(qqq_pool_values_all), "All investment values (QQQ)", "Date",bh=TRUE)
 ```
 
 # Comparison
@@ -434,42 +439,28 @@ ggplot(variable, aes(x = as.Date(rownames(variable)))) +
 ```
 ## The `grammar` signal against prediction-based signal
 
-# Compare results with the first project
-
-Accessing signal data in the form of a csv file
+Our classmates from Group 27 have produced a model to predict the price on the next day; with that, they have produced a signal that buys when the price is going up in the future, and sells when it will decrease. We want to compare our signals with their approach, so we load their data for both of our test sets and preprocess it to match formats.
 
 ```{r}
-zestin_signal_spy <- read.csv("predicted_days_spy.csv")
-```
-
-Compare the signals column data with the `test_all_signals` dataframe
-
-```{r}
+test_signal_zestin <- read.csv("predicted_days_spy.csv")
 # Replace the column values 'buy' with 1, 'sell' with -1 and 'hold' with 0
-# austin_signal_data$Signals <- as.numeric(austin_signal_data$Signals)
-zestin_signal_spy$Signals[zestin_signal_spy$Signals == 'Buy'] <- 1
-zestin_signal_spy$Signals[zestin_signal_spy$Signals == 'Sell'] <- -1
-zestin_signal_spy$Signals[zestin_signal_spy$Signals == 'Hold'] <- 0
+test_signal_zestin$Signals[test_signal_zestin$Signals == 'Buy'] <- 1
+test_signal_zestin$Signals[test_signal_zestin$Signals == 'Sell'] <- -1
+test_signal_zestin$Signals[test_signal_zestin$Signals == 'Hold'] <- 0
 ```
 
 ```{r}
-# Check the length of the austin signal data and append the signals column to the test_all_signals dataframe
-if (length(zestin_signal_spy$Signals) == nrow(test_all_signals)) {
-    test_all_signals <- cbind(test_all_signals, zestin_signal_spy$Signals)
-    colnames(test_all_signals)[ncol(test_all_signals)] <- "lstm"
-}else {
-    test_all_signals <- cbind(test_all_signals, zestin_signal_spy$Signals[1:nrow(test_all_signals)])
-    colnames(test_all_signals)[ncol(test_all_signals)] <- "lstm"
-}
-```
-
-```{r}
-# drop rows with NA values
-# test_all_signals <- test_all_signals[complete.cases(test_all_signals), ]
-test_all_signals[is.na(test_all_signals)] <- 0
+# Check length of their signal data and append the signals column to the test_all_signals dataframe
+if (length(test_signal_zestin$Signals) == nrow(test_all_signals)) {
+    test_all_signals <- cbind(test_all_signals, test_signal_zestin$Signals)
+}else{test_all_signals <- cbind(test_all_signals, test_signal_zestin$Signals[1:nrow(test_all_signals)])}
+colnames(test_all_signals)[ncol(test_all_signals)] <- "lstm"
+test_all_signals[is.na(test_all_signals)] <- 0 # replace NA with hold
 test_all_signals <- as.data.frame(test_all_signals)
 test_all_signals$lstm <- as.numeric(test_all_signals$lstm)
 ```
+
+For our first test set (i.e., SPY from 2022 to 2023)
 
 ``` {r echo=F, fig.width=6, fig.height=2, fig.align="center"}
 lstm_compare_spy <- data.frame(
@@ -486,44 +477,30 @@ ggplot(variable, aes(x = as.Date(rownames(variable)))) +
       geom_line(aes(y = variable$common, color = as.character(legend[2]))) +
       geom_line(aes(y = variable$buy_hold, color = as.character(legend[3]))) +
       geom_line(aes(y = variable$lstm, color = as.character(legend[4]))) +
-      labs(title = 'Comparison against base (SPY)', x = 'Date', y = 'Total value', color='Legend') +
+      labs(title = 'Comparison against Group 27 (SPY)', x = 'Date', y = 'Total value', color='Legend') +
       theme_minimal()
 ```
 
 
 
 ```{r}
-zestin_signal_qqq <- read.csv("predicted_days_qqq.csv")
-```
-
-Compare the signals column data with the `test_all_signals` dataframe
-
-```{r}
-# Replace the column values 'buy' with 1, 'sell' with -1 and 'hold' with 0
-# austin_signal_data$Signals <- as.numeric(austin_signal_data$Signals)
-zestin_signal_qqq$Signals[zestin_signal_qqq$Signals == 'Buy'] <- 1
-zestin_signal_qqq$Signals[zestin_signal_qqq$Signals == 'Sell'] <- -1
-zestin_signal_qqq$Signals[zestin_signal_qqq$Signals == 'Hold'] <- 0
+qqq_signal_zestin <- read.csv("predicted_days_qqq.csv")
+qqq_signal_zestin$Signals[qqq_signal_zestin$Signals == 'Buy'] <- 1
+qqq_signal_zestin$Signals[qqq_signal_zestin$Signals == 'Sell'] <- -1
+qqq_signal_zestin$Signals[qqq_signal_zestin$Signals == 'Hold'] <- 0
 ```
 
 ```{r}
-# Check the length of the austin signal data and append the signals column to the qqq_all_signals dataframe
-if (length(zestin_signal_qqq$Signals) == nrow(qqq_all_signals)) {
-    qqq_all_signals <- cbind(qqq_all_signals, zestin_signal_qqq$Signals)
-    colnames(qqq_all_signals)[ncol(qqq_all_signals)] <- "lstm"
-}else {
-    qqq_all_signals <- cbind(qqq_all_signals, zestin_signal_qqq$Signals[1:nrow(qqq_all_signals)])
-    colnames(qqq_all_signals)[ncol(qqq_all_signals)] <- "lstm"
-}
-```
-
-```{r}
-# drop rows with NA values
-# test_all_signals <- test_all_signals[complete.cases(test_all_signals), ]
+if (length(qqq_signal_zestin$Signals) == nrow(qqq_all_signals)) {
+    qqq_all_signals <- cbind(qqq_all_signals, qqq_signal_zestin$Signals)
+}else{qqq_all_signals <- cbind(qqq_all_signals, qqq_signal_zestin$Signals[1:nrow(qqq_all_signals)])}
+colnames(qqq_all_signals)[ncol(qqq_all_signals)] <- "lstm"
 qqq_all_signals[is.na(qqq_all_signals)] <- 0
 qqq_all_signals <- as.data.frame(qqq_all_signals)
 qqq_all_signals$lstm <- as.numeric(qqq_all_signals$lstm)
 ```
+
+For our second test set (i.e., QQQ data from 2018 to 2022)
 
 ``` {r echo=F, fig.width=6, fig.height=2, fig.align="center"}
 lstm_compare_qqq <- data.frame(
@@ -540,6 +517,6 @@ ggplot(variable, aes(x = as.Date(rownames(variable)))) +
       geom_line(aes(y = variable$common, color = as.character(legend[2]))) +
       geom_line(aes(y = variable$buy_hold, color = as.character(legend[3]))) +
       geom_line(aes(y = variable$lstm, color = as.character(legend[4]))) +
-      labs(title = 'Comparison against base (QQQ)', x = 'Date', y = 'Total value', color='Legend') +
+      labs(title = 'Comparison against Group 27 (QQQ)', x = 'Date', y = 'Total value', color='Legend') +
       theme_minimal()
 ```
